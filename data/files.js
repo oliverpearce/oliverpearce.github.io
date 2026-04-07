@@ -145,7 +145,7 @@ const FILES = {
     ['link',    '            oliverjpearce.com',             'https://oliverjpearce.com'],
     ['blank',   ''],
 
-    ['default', '  Open to: everything! say hi 👋👋'],
+    ['default', '  Open to: everything! say hi o/'],
   ],
 
 
@@ -194,7 +194,7 @@ const FILES = {
     ['gold',    '  Status'],
     ['green',   '            LIVE on Apple App Store ✓'],
     ['gold',    '  Link'],
-    ['link',    '            apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077',
+    ['link',    '            apps.apple.com/...',
                              'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
     ['blank',   ''],
 
@@ -219,9 +219,9 @@ const FILES = {
     ['gold',    '  Stack'],
     ['white',   '            Supabase · WebRTC · React'],
     ['gold',    '  Devpost'],
-    ['link',    '            devpost.com/software/studysync-gbo8fx', 'https://devpost.com/software/studysync-gbo8fx'],
+    ['link',    '            devpost.com/', 'https://devpost.com/software/studysync-gbo8fx'],
     ['gold',    '  Source'],
-    ['link',    '            github.com/Yelloo5191/StudyBuddy',      'https://github.com/Yelloo5191/StudyBuddy'],
+    ['link',    '            github.com/',      'https://github.com/Yelloo5191/StudyBuddy'],
   ],
 
 
@@ -240,12 +240,12 @@ const FILES = {
     ['gold',    '  Role'],
     ['white',   '            Co-author · Model testing & evaluation'],
     ['gold',    '  Stack'],
-    ['white',   '            PyTorch · U-Net · VAE'],
+    ['white',   '            Colab · U-Net · VAE'],
     ['gold',    '  Manuscript'],
-    ['link',    '            drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS',
+    ['link',    '            drive.google.com/file/...',
                              'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
     ['gold',    '  Org'],
-    ['link',    '            UCSC ACM Branch · ucscacm.vercel.app', 'https://ucscacm.vercel.app'],
+    ['link',    '            UCSC ACM Branch', 'https://ucscacm.vercel.app'],
   ],
 
 
