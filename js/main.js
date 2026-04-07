@@ -1,135 +1,101 @@
 /**
  * js/main.js
  *
- * Application entry point. Owns the single piece of shared mutable state
- * (cwd — the current working directory) and wires all modules together.
+ * The application entry point — this is where everything gets wired together.
  *
- * Startup sequence:
- *   1. DOMContentLoaded fires → Boot.run() starts the animated boot sequence.
- *   2. Boot sequence finishes → showShell() is called as the onComplete callback.
- *   3. showShell() hides the boot section, reveals the shell, and initialises
- *      Output and Input (both require the shell's DOM elements to exist and
- *      be visible before they can cache element references).
- *   4. From here, every user interaction flows through handleCommand():
- *        user types / clicks → Input captures it → handleCommand() →
- *        Commands.execute() → Output renders results
+ * This file owns `cwd` (current working directory), which is the only shared
+ * piece of mutable state in the whole app. All other modules are stateless
+ * with respect to navigation, which makes them easier to reason about.
  *
- * Why cwd lives here (not in commands.js or input.js):
- *   cwd is mutated by `cd` but read by every command for path resolution.
- *   Keeping it here — in the module that wires everything together — avoids
- *   circular dependencies and makes the data flow explicit:
- *     main.js passes cwd into Commands.execute() on every call
- *     main.js passes setCwd into Commands.execute() so only `cd` can update it
- *   No module holds a stale reference; cwd is always read fresh at call time.
+ * The startup flow is:
+ *   1. Browser parses the HTML and runs this script
+ *   2. We wait for DOMContentLoaded to ensure all elements exist
+ *   3. Boot.run() starts the animated boot sequence
+ *   4. When boot finishes, it calls showShell()
+ *   5. showShell() reveals the terminal and initialises Input + Output
+ *   6. From then on, every command goes: Input → handleCommand() → Commands.execute()
  *
- * Dependencies (must be loaded before this file — see index.html <script> order):
- *   data/filesystem.js  → FILESYSTEM global
- *   data/files.js       → FILES global
- *   data/easter-eggs.js → EASTER_EGGS global
- *   js/output.js        → Output global
- *   js/filesystem.js    → Filesystem global
- *   js/commands.js      → Commands global
- *   js/boot.js          → Boot global
- *   js/input.js         → Input global
+ * We wrap everything in an IIFE (the outer (function() { ... })()) to avoid
+ * polluting the global scope with variables like `cwd` and `setCwd`.
+ * These don't need to be global — nothing outside this file uses them.
  */
 
 (function () {
 
-  /* ── Shared state ───────────────────────────────────────────────── */
-
-  /**
-   * Current working directory.
-   * Always a normalised absolute path (e.g. '~', '~/projects/llm-ctf').
-   * Never has a trailing slash. Starts at home on load.
-   * Updated only via setCwd() to keep all side-effects (DOM updates) in one place.
-   * @type {string}
-   */
+  /*
+    cwd (current working directory) starts at home.
+    It's declared with `let` because it changes when the user runs `cd`.
+    `const` would prevent reassignment, so we can't use it here.
+  */
   let cwd = '~';
 
+  /*
+    setCwd() is the ONLY place where cwd gets updated. It also updates
+    every UI element that shows the current path, keeping them in sync.
+    By funnelling all cwd changes through this one function, we guarantee
+    the prompt label, title bar, and internal state are always consistent.
 
-  /* ── State updater ──────────────────────────────────────────────── */
-
-  /**
-   * Update cwd and reflect the change in every UI element that shows it.
-   *
-   * Two places in the UI always display the current path:
-   *   1. The prompt label in the input row (#cur-path span)
-   *   2. The window title bar (#bar-title)
-   *
-   * By funnelling all cwd changes through this one function, we guarantee
-   * those two elements are always in sync with the actual value.
-   *
-   * Passed into Commands.execute() as a callback so command handlers can
-   * trigger a cwd change without importing or knowing about main.js.
-   *
-   * @param {string} newPath - normalised absolute path (from Filesystem.resolve)
-   */
+    This function is passed into Commands.execute() as a callback so the
+    `cd` command handler can trigger a cwd change without needing to import
+    or know about main.js — a pattern called "dependency injection".
+  */
   function setCwd(newPath) {
     cwd = newPath;
+    /* Update the path shown in the input row prompt */
     document.getElementById('cur-path').textContent  = cwd;
-    document.getElementById('bar-title').textContent = `oliver@kali: ${cwd} — bash`;
+    /* Update the terminal window title bar */
+    document.getElementById('bar-title').textContent = `root@oliver: ${cwd} — bash`;
   }
 
-
-  /* ── Command pipeline ───────────────────────────────────────────── */
-
-  /**
-   * Handle a submitted command string.
-   * This is the single entry point for all command execution — both typed
-   * input (from Input's keydown handler) and button clicks (from the quick bar)
-   * route through here.
-   *
-   * We read cwd fresh on every call (closure over the let variable above)
-   * so `cd` changes are always visible to the next command.
-   *
-   * @param {string} rawCmd - the raw command string exactly as the user submitted it
-   */
+  /*
+    handleCommand() is what Input calls when the user submits a command.
+    It reads `cwd` from the closure (the outer scope of the IIFE) so it
+    always has the current value — even if `cd` has changed it since the
+    last command ran.
+  */
   function handleCommand(rawCmd) {
     Commands.execute(rawCmd, cwd, setCwd);
   }
 
+  /*
+    showShell() is the callback passed to Boot.run(). Boot calls it when the
+    animation sequence is complete.
 
-  /* ── Boot → Shell transition ────────────────────────────────────── */
-
-  /**
-   * Called by Boot.run() when the boot animation completes.
-   * Transitions from the boot screen to the interactive shell.
-   *
-   * Why Output.init() and Input.init() are called here (not at the top):
-   *   Both modules cache DOM element references on init. The #output element
-   *   and #cmd-input live inside the #main shell section, which has the HTML
-   *   `hidden` attribute on page load. Some browsers refuse to return elements
-   *   from getElementById when they're inside a hidden subtree, so we must
-   *   call init() only after revealing the section.
-   */
+    Output.init() and Input.init() are called HERE (not at the top of the file)
+    because both functions call document.getElementById() internally, and those
+    elements live inside the #main section which has the `hidden` attribute on
+    page load. Browsers may not return elements inside a `hidden` ancestor, so
+    we must wait until we've removed `hidden` before calling init().
+  */
   function showShell() {
-    /* Hide the boot section — it's no longer needed */
+    /* Remove the boot screen from layout */
     document.getElementById('boot').style.display = 'none';
 
-    /* Reveal the shell section by removing the `hidden` attribute.
-       This also triggers the shell-appear fade-in animation in animations.css. */
+    /*
+      removeAttribute('hidden') reveals the #main section. This also triggers
+      the shell-appear fade-in animation defined in animations.css, because
+      the CSS rule targets .shell:not([hidden]).
+    */
     document.getElementById('main').removeAttribute('hidden');
 
-    /* Update the title bar to reflect the interactive shell state */
-    document.getElementById('bar-title').textContent = 'oliver@kali: ~ — bash';
+    /* Update the title bar text for the interactive shell state */
+    document.getElementById('bar-title').textContent = 'root@oliver: ~ — bash';
 
-    /* Initialise modules that depend on shell DOM elements being visible */
     Output.init();
     Input.init(handleCommand);
-
-    /* Focus the input field so the user can start typing immediately */
-    Input.focus();
+    Input.focus(); /* auto-focus the input so users can type immediately */
   }
 
+  /*
+    DOMContentLoaded fires when the HTML has been fully parsed and all
+    elements exist in the DOM — but before images and stylesheets have
+    finished loading. This is the right event to use here because we only
+    need the DOM structure, not any loaded resources.
 
-  /* ── Bootstrap ──────────────────────────────────────────────────── */
-
-  /**
-   * Wait for the DOM to be fully parsed before doing anything.
-   * DOMContentLoaded fires before images and stylesheets finish loading,
-   * but after all HTML is parsed — which is all we need since we're only
-   * working with DOM elements, not image dimensions or computed styles.
-   */
+    If we ran Boot.run() immediately (not inside an event listener), the
+    script would execute before the HTML elements it references are parsed,
+    causing getElementById calls to return null.
+  */
   document.addEventListener('DOMContentLoaded', () => {
     Boot.run(showShell);
   });

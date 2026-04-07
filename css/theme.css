@@ -1,79 +1,93 @@
 /*
  * css/theme.css
  *
- * Single source of truth for every design token: colors, fonts, spacing, and
- * shadows. All other CSS files reference these custom properties exclusively —
- * no hardcoded hex values or sizes anywhere else.
+ * CSS Custom Properties (also called CSS variables) are defined here.
+ * The idea is to have ONE place where all the colours, fonts, and sizes live.
+ * Every other CSS file uses these variables instead of hardcoded values.
  *
- * To retheme the whole site, only this file needs to change.
+ * This means if you want to change the accent colour from green to blue,
+ * you change it in ONE place here and it updates everywhere automatically —
+ * instead of hunting through every file for every instance of that hex code.
  *
- * Custom properties are defined on :root so they're accessible from any
- * selector in any stylesheet without specificity issues.
+ * Variables are defined on :root because that's the highest-level element
+ * in the DOM (essentially the <html> element), so the variables are accessible
+ * from any selector in any stylesheet without specificity issues.
  */
 
 :root {
 
-  /* ── Typography ───────────────────────────────────────────────────────
-     JetBrains Mono loaded via Google Fonts (see index.html <head>).
-     The fallback stack covers common monospace fonts on systems where
-     the web font hasn't loaded yet, preventing an invisible flash of text. */
+  /*
+    CSS custom properties always start with two dashes (--).
+    You reference them later with var(--property-name).
+
+    The font stack lists fallbacks after JetBrains Mono — if the Google Font
+    hasn't loaded yet, the browser will try each font in order until it finds
+    one that's installed. This prevents a flash of an ugly system font while
+    the webfont is loading.
+  */
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
 
-  /* ── Font sizes ───────────────────────────────────────────────────────
-     Kept as named tokens so "make everything slightly larger" is one change. */
-  --font-size-base:   13px;   /* body text, terminal lines, input field        */
-  --font-size-small:  11px;   /* quick-bar buttons, banner subtitle, meta text  */
-  --font-size-banner: 11px;   /* ASCII art (same as small, named for clarity)   */
+  /* Font sizes — named tokens so changing "base" updates all body text at once */
+  --font-size-base:   13px; /* main terminal text, input field */
+  --font-size-small:  11px; /* buttons, subtitle hints */
+  --font-size-banner: 11px; /* ASCII art (same value, separate name for clarity) */
 
-  /* ── Background colors ────────────────────────────────────────────────
-     Dark palette chosen to match the Kali Linux terminal aesthetic.
-     Each level is slightly lighter than the one before it:
-       page < terminal < titlebar/quickbar < hover state               */
-  --color-bg-page:      #090c10;  /* outermost page background                 */
-  --color-bg-terminal:  #0d1117;  /* terminal window surface                   */
-  --color-bg-titlebar:  #161b22;  /* title bar and quick-bar background        */
-  --color-bg-hover:     #21262d;  /* button/element hover state                */
+  /*
+    Background colours — we have four levels, each slightly lighter than the last.
+    This creates visual depth: the darkest colour is the farthest back (the page),
+    and lighter colours come forward (the terminal window, then the title bar).
+  */
+  --color-bg-page:      #090c10; /* the page background behind the terminal */
+  --color-bg-terminal:  #0d1117; /* the terminal window surface */
+  --color-bg-titlebar:  #161b22; /* the title bar and quick-bar backgrounds */
+  --color-bg-hover:     #21262d; /* button backgrounds on hover */
 
-  /* ── Border colors ────────────────────────────────────────────────────
-     Two levels let us distinguish prominent borders from subtle dividers. */
-  --color-border:        #30363d;  /* main window border, button borders        */
-  --color-border-subtle: #21262d;  /* internal dividers (input row, quick bar)  */
+  /*
+    Two border colours — "border" for prominent edges, "border-subtle" for
+    internal dividers that should be visible but not draw too much attention.
+  */
+  --color-border:        #30363d;
+  --color-border-subtle: #21262d;
 
-  /* ── Semantic text colors ─────────────────────────────────────────────
-     Named by role rather than appearance so we can adjust the palette
-     without hunting through every file for a specific hex code.           */
-  --color-text-primary:  #e1e4e8;  /* main readable text, command echoes        */
-  --color-text-muted:    #8b949e;  /* secondary / less important text           */
-  --color-text-faint:    #6e7681;  /* meta text, title bar label                */
+  /*
+    Text colours at three levels of emphasis.
+    "primary" is for important content, "muted" for descriptions and secondary
+    text, and "faint" for UI chrome like the title bar label.
+  */
+  --color-text-primary:  #e1e4e8;
+  --color-text-muted:    #8b949e;
+  --color-text-faint:    #6e7681;
 
-  /* ── Terminal output palette ──────────────────────────────────────────
-     These map to the .line--{name} classes in terminal.css and to the
-     first element of every [colorClass, text] tuple in data/files.js.
-     Named after their visual color rather than their semantic meaning
-     because they're used decoratively (like syntax highlighting).        */
-  --color-green:   #85e89d;  /* success, directory names, ASCII art glow     */
-  --color-blue:    #79b8ff;  /* links, host in prompt, info text             */
-  --color-purple:  #b392f0;  /* accent (fortune easter egg)                  */
-  --color-gold:    #febc2e;  /* section headers inside files, status labels  */
-  --color-red:     #f97583;  /* errors, warnings, user portion of prompt     */
-  --color-white:   #e1e4e8;  /* primary content text (alias of text-primary) */
+  /*
+    The terminal output colour palette. These map directly to CSS classes —
+    for example, --color-green is used by .line--green in terminal.css, and
+    'green' is the colorClass you'd use in a data/files.js line tuple.
+  */
+  --color-green:   #85e89d; /* success messages, directory names, ASCII art glow */
+  --color-blue:    #79b8ff; /* links, hostname in prompt, informational text */
+  --color-purple:  #b392f0; /* accent colour, used sparingly */
+  --color-gold:    #febc2e; /* section labels and key names inside files */
+  --color-red:     #f97583; /* errors, warnings, the "root" part of the prompt */
+  --color-white:   #e1e4e8; /* primary content text (same value as text-primary) */
 
-  /* ── Title-bar dot colors ─────────────────────────────────────────────
-     Standard macOS traffic-light colours — instantly recognisable.       */
+  /* The three macOS-style "traffic light" dots in the title bar */
   --color-dot-red:    #ff5f57;
   --color-dot-yellow: #febc2e;
   --color-dot-green:  #28c840;
 
-  /* ── Layout tokens ────────────────────────────────────────────────────
-     Used in terminal.css for consistent rounding and spacing.             */
-  --radius-terminal: 12px;  /* outer window corner radius                   */
-  --radius-btn:       5px;  /* quick-bar button corner radius               */
+  /* Border radius tokens — using a variable means all corners change together */
+  --radius-terminal: 12px; /* the outer window rounded corners */
+  --radius-btn:       5px; /* quick-bar button corners */
 
-  --padding-h: 20px;  /* horizontal padding inside the terminal body      */
+  /* Consistent horizontal padding used throughout the terminal body */
+  --padding-h: 20px;
 
-  /* ── Shadow ──────────────────────────────────────────────────────────
-     The green tint in the first layer ties the glow to the terminal's
-     green accent color; the second layer adds physical depth.             */
+  /*
+    The box-shadow uses two layers separated by a comma.
+    The first adds a subtle green glow (matches the terminal accent colour).
+    The second adds a dark drop shadow for physical depth.
+    Using two layers together creates a more natural-looking shadow than one alone.
+  */
   --shadow-terminal:
     0 0 60px rgba(0, 255, 100, 0.06),
     0 24px 80px rgba(0, 0, 0, 0.8);

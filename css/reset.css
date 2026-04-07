@@ -1,37 +1,51 @@
 /*
  * css/reset.css
  *
- * Strips browser-default styles so every element starts from a known
- * baseline. This prevents unexpected margin/padding differences across
- * Chrome, Firefox, and Safari without fighting specificity later.
+ * Every browser has its own default styles — Chrome, Firefox, and Safari all
+ * add different amounts of margin and padding to elements like <h1>, <p>, and
+ * <button>. A CSS reset strips those defaults so we start from a blank slate
+ * and our styles look the same in every browser.
  *
- * Rule of thumb: only put here what you'd want reset on EVERY project.
- * Project-specific base styles belong in terminal.css.
+ * We're using a "minimal" reset here, not a full normalize.css, because this
+ * is a simple single-page site and we don't need to handle every edge case.
  */
 
-/* Universal box model: border and padding are included in width/height,
-   which makes layout arithmetic predictable everywhere. */
+/*
+  The universal selector (*) applies these rules to EVERY element on the page.
+  box-sizing: border-box changes how width and height are calculated — by default
+  CSS uses "content-box" where padding and border are ADDED to the width you set.
+  With border-box, padding and border are INCLUDED in the width, which is much
+  more intuitive and prevents elements from unexpectedly overflowing their containers.
+*/
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* Prevent iOS from bumping text size when the device rotates. */
+/*
+  On iOS, rotating the phone to landscape mode causes Safari to automatically
+  increase the font size. -webkit-text-size-adjust: 100% disables this behaviour
+  so our carefully chosen font sizes stay exactly as we set them.
+*/
 html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Minimum height so the body can be used as a flex container for centering. */
+/*
+  min-height: 100vh means the body is at least as tall as the viewport (vh = viewport height).
+  This lets us use flexbox on the body to vertically center the terminal window —
+  without this, a short page wouldn't fill the screen and centering wouldn't work.
+*/
 body {
   min-height: 100vh;
 }
 
 /*
-  Reset interactive elements so they inherit the page font.
-  Browsers render <button>, <input>, and <select> in the system UI font
-  by default — resetting them here means we only have to set the font once
-  in theme.css rather than on every individual component.
+  Browsers render <button> and <input> using the system UI font by default,
+  not the page font. "font: inherit" makes them use whatever font the parent
+  element has, so our JetBrains Mono setting on <body> flows down to buttons
+  and inputs automatically without having to set it on each one individually.
 */
 button,
 input,
@@ -46,12 +60,13 @@ button {
   cursor: pointer;
 }
 
-/* Reset <pre> so monospace blocks don't get a doubled font-size in some browsers. */
-pre {
-  font: inherit;
-}
-
-/* Reset <kbd> (used in the banner subtitle for command hints). */
+/*
+  <pre> is used for the ASCII art banner. Without this reset, some browsers
+  apply a slightly different monospace font to <pre> elements, which would
+  break the alignment of the ASCII art characters.
+  <kbd> is used in the banner subtitle for the command hints.
+*/
+pre,
 kbd {
   font: inherit;
 }

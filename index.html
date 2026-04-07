@@ -6,24 +6,30 @@
   <title>Oliver Pearce — Terminal Portfolio</title>
 
   <!--
-    Google Fonts: JetBrains Mono
-    Used everywhere for the monospace terminal aesthetic.
-    The two <link rel="preconnect"> tags open TCP connections to Google's font
-    servers early, shaving ~100ms off the font load time.
+    We use Google Fonts to load "JetBrains Mono", a monospace font designed
+    for code editors. Monospace means every character is the same width, which
+    is what makes the terminal alignment look correct.
+
+    The two <link rel="preconnect"> tags tell the browser to open a connection
+    to Google's font servers BEFORE it actually needs the font file — this is
+    called a "preconnect hint" and it shaves ~100ms off the font load time
+    because the TCP handshake is already done by the time the font is requested.
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 
   <!--
-    CSS load order matters:
-      1. reset.css     — strips browser default styles so we start from zero
-      2. theme.css     — declares all CSS custom properties (colors, fonts, spacing)
-      3. terminal.css  — layout and component styles (references theme vars)
-      4. animations.css — keyframes and animation rules (references theme vars)
+    CSS is loaded in a specific order because later files can reference
+    variables defined in earlier ones:
 
-    Keeping them separate makes it easy to swap the theme without touching
-    layout, or update animations without risking layout regressions.
+      reset.css    → strips browser default styles (margins, padding, etc.)
+      theme.css    → defines CSS custom properties like --color-green
+      terminal.css → uses those custom properties for all the actual styling
+      animations.css → uses the same custom properties for keyframes
+
+    If you loaded terminal.css before theme.css, the variables wouldn't exist
+    yet and everything would fall back to their initial values (usually nothing).
   -->
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/theme.css" />
@@ -33,24 +39,37 @@
 <body>
 
   <!--
-    Scanlines overlay
-    A purely decorative fixed layer on top of everything (z-index: 999).
-    Implemented as a repeating-linear-gradient in CSS — no image needed.
-    aria-hidden removes it from the accessibility tree entirely.
+    This div creates the CRT scanline effect you see on old monitors.
+    It uses aria-hidden="true" which tells screen readers (assistive technology
+    for visually impaired users) to completely ignore this element — because
+    it's purely decorative and has no meaningful content.
+
+    The actual scanline stripes are created with CSS (a repeating gradient),
+    not an image, so there's nothing to download.
   -->
   <div class="scanlines" aria-hidden="true"></div>
 
   <!--
-    Terminal window
-    Clicking anywhere inside this element re-focuses the hidden text input
-    (wired in js/input.js), so users don't have to aim precisely at the field.
+    <main> is a semantic HTML element that marks the primary content of the page.
+    Screen readers use it as a landmark so users can jump straight to the main
+    content without tabbing through navigation first.
+
+    The id="terminal" is used by JavaScript (in input.js) to attach a click
+    listener — clicking anywhere inside re-focuses the text input field so
+    the user doesn't have to aim at the tiny input box.
+
+    role="main" is redundant with <main> but added for older screen readers
+    that don't understand the <main> element natively.
   -->
   <main class="terminal" id="terminal" role="main">
 
-    <!-- ── Title Bar ─────────────────────────────────────────────────────
-         Mimics macOS window chrome with three coloured dot buttons.
-         The title text (#bar-title) is updated dynamically by js/main.js
-         as the user navigates directories or the boot state changes.
+    <!--
+      The title bar with the three coloured dots mimics a macOS window.
+      These dots don't actually do anything — they're purely decorative.
+
+      The #bar-title span gets its text updated dynamically by JavaScript
+      in main.js whenever the user changes directory, so it shows the
+      current path like a real terminal window title.
     -->
     <div class="titlebar" aria-label="Terminal title bar">
       <div class="titlebar__dots">
@@ -60,31 +79,41 @@
       </div>
       <span class="titlebar__title" id="bar-title">kali — boot — 80×24</span>
       <!--
-        titlebar__spacer mirrors the pixel width of titlebar__dots so that
-        flexbox centering keeps the title text exactly in the middle.
+        This empty div is a "spacer" — it exists only to push the title text
+        into the exact center of the bar. Because we're using flexbox, the dots
+        on the left would push the title off-center without something equal on
+        the right to balance it. The spacer matches the dot group's width.
       -->
       <div class="titlebar__spacer" aria-hidden="true"></div>
     </div>
 
-    <!-- ── Boot Screen ────────────────────────────────────────────────────
-         Starts visible. js/boot.js injects animated lines here via staggered
-         setTimeout calls, then hides this section and reveals #main.
-         aria-live="polite" announces each new line to screen readers without
-         interrupting anything already being spoken.
+    <!--
+      The boot section starts visible. boot.js injects animated lines into it
+      using staggered setTimeout calls (each line appears after a delay),
+      then hides this section and shows #main when the sequence finishes.
+
+      aria-live="polite" tells screen readers to announce new content added
+      to this element, but only after the user finishes whatever they're doing
+      (polite = wait your turn, vs "assertive" which interrupts immediately).
     -->
     <section class="boot" id="boot" aria-label="Boot sequence" aria-live="polite"></section>
 
-    <!-- ── Main Shell ────────────────────────────────────────────────────
-         Starts hidden via the HTML `hidden` attribute (not CSS display:none).
-         Using `hidden` also removes the element from the accessibility tree
-         until js/boot.js removes the attribute after the boot sequence ends.
+    <!--
+      The main shell section starts hidden using the HTML `hidden` attribute.
+      We use `hidden` instead of a CSS class like display:none because `hidden`
+      also removes the element from the accessibility tree, so screen readers
+      won't try to read content the user can't see yet.
+
+      boot.js removes this attribute when the boot animation finishes,
+      which triggers the fade-in animation defined in animations.css.
     -->
     <section class="shell" id="main" aria-label="Terminal shell" hidden>
 
-      <!-- ── ASCII Banner ───────────────────────────────────────────────
-           The <pre> content is written by js/boot.js from a plain string
-           array defined there. Keeping it in JS (not hardcoded in HTML)
-           makes it easy to update without touching markup.
+      <!--
+        The ASCII art banner content is written by boot.js (not hardcoded here)
+        because it's easier to edit a JavaScript string array than to get the
+        spacing right inside an HTML file. The <pre> tag preserves whitespace
+        exactly as written, which is essential for ASCII art to look right.
       -->
       <div class="banner" id="banner" aria-label="Oliver Pearce banner">
         <pre class="banner__art" id="ascii-art"></pre>
@@ -92,34 +121,38 @@
           Type <kbd>help</kbd> to list commands
           &nbsp;·&nbsp;
           Click a button below
-          &nbsp;·&nbsp;
-          Try <kbd>matrix</kbd> or <kbd>fortune</kbd> for easter eggs 👀
         </p>
       </div>
 
-      <!-- ── Output Log ──────────────────────────────────────────────────
-           All terminal output is injected here by js/output.js.
-           role="log" signals to screen readers that this region receives
-           live updates; aria-live="polite" queues announcements politely.
+      <!--
+        All terminal output (the text that appears when you run commands) is
+        injected into this div by output.js. We never write to it directly from
+        other files — everything goes through output.js functions instead.
+
+        role="log" is a semantic role that tells screen readers this area
+        receives live updates (like a chat log or terminal output).
       -->
       <div class="output" id="output" role="log" aria-live="polite" aria-label="Terminal output"></div>
 
-      <!-- ── Input Row ───────────────────────────────────────────────────
-           Flex row: [coloured prompt label] [transparent text field] [cursor block].
-           The <input> uses caret-color: transparent so only our custom
-           animated cursor <span> is ever visible — giving full control over
-           the cursor appearance and blink timing.
-           The prompt label is aria-hidden because the input's own aria-label
-           already gives screen readers all the context they need.
+      <!--
+        The input row contains three things laid out as a flex row:
+          1. The coloured prompt label (root@oliver:~#) — aria-hidden because
+             the input field's aria-label already describes the full context
+          2. The actual text input field where you type
+          3. A fake blinking cursor (a green rectangle that blinks via CSS)
+
+        The real browser cursor is hidden with caret-color: transparent in CSS
+        because we want full control over the cursor's appearance and blink timing.
+        The .cursor span is our custom replacement.
       -->
       <div class="input-row">
         <span class="prompt" aria-hidden="true">
-          <span class="prompt__user">oliver</span><span
+          <span class="prompt__user">root</span><span
           class="prompt__at">@</span><span
-          class="prompt__host">kali</span><span
+          class="prompt__host">oliver</span><span
           class="prompt__sep">:</span><span
           class="prompt__path" id="cur-path">~</span><span
-          class="prompt__dollar">$</span>
+          class="prompt__dollar">#</span>
         </span>
         <input
           class="input-row__field"
@@ -132,12 +165,20 @@
         <span class="cursor" aria-hidden="true"></span>
       </div>
 
-      <!-- ── Quick Command Bar ──────────────────────────────────────────
-           Shortcut buttons so visitors can explore without typing.
-           Each button holds its command string in a data-cmd attribute;
-           js/input.js reads that and passes it straight to the command router,
-           identical to if the user had typed and pressed Enter.
-           Wrapped in <nav> with an aria-label so it's a named landmark region.
+      <!--
+        The quick-bar is a row of buttons that fire commands without typing.
+        Each button stores its command string in a data-cmd attribute — this is
+        called a "data attribute", a way to attach custom data to HTML elements.
+        JavaScript reads btn.dataset.cmd and submits it as if the user typed it.
+
+        We use <nav> with an aria-label here because this is a navigation region
+        (it helps users navigate the terminal's content), making it a discoverable
+        landmark for screen reader users.
+
+        NOTE: If you add or remove commands here, also update:
+          - the COMMANDS map in js/commands.js
+          - the AUTOCOMPLETE_COMMANDS list in js/input.js
+          - the cmdHelp() bubbles list in js/commands.js
       -->
       <nav class="quickbar" aria-label="Quick commands">
         <button class="quickbar__btn" data-cmd="whoami">whoami</button>
@@ -157,26 +198,25 @@
   </main>
 
   <!--
-    Script load order
+    Scripts are loaded at the BOTTOM of the body (not in <head>) because the
+    browser runs JavaScript as soon as it encounters a <script> tag — if scripts
+    were in <head>, they'd run before the HTML elements they reference even exist.
 
-    Data files must load before the JS modules that read them, because the
-    modules reference the globals (FILESYSTEM, FILES, EASTER_EGGS) at call
-    time. Within JS modules, load order follows the dependency graph:
+    The load order within scripts also matters because each file uses globals
+    defined by earlier files:
 
-      data/filesystem.js  → declares FILESYSTEM (global object)
-      data/files.js       → declares FILES       (global object)
-      data/easter-eggs.js → declares EASTER_EGGS (global object)
+      data/filesystem.js  → creates the FILESYSTEM global object
+      data/files.js       → creates the FILES global object
 
-      js/output.js      → no module deps; provides Output global
-      js/filesystem.js  → reads FILESYSTEM + FILES; provides Filesystem global
-      js/commands.js    → reads Output, Filesystem, EASTER_EGGS; provides Commands global
-      js/boot.js        → standalone animation; provides Boot global
-      js/input.js       → standalone input handler; provides Input global
-      js/main.js        → entry point; depends on all of the above
+      js/output.js        → creates Output (needs nothing)
+      js/filesystem.js    → creates Filesystem (reads FILESYSTEM + FILES)
+      js/commands.js      → creates Commands (uses Output and Filesystem)
+      js/boot.js          → creates Boot (standalone, no deps)
+      js/input.js         → creates Input (standalone, wired in main.js)
+      js/main.js          → the entry point that starts everything
   -->
   <script src="data/filesystem.js"></script>
   <script src="data/files.js"></script>
-  <script src="data/easter-eggs.js"></script>
 
   <script src="js/output.js"></script>
   <script src="js/filesystem.js"></script>

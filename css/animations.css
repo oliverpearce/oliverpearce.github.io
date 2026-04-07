@@ -1,22 +1,25 @@
 /*
  * css/animations.css
  *
- * All @keyframe definitions and animation assignments.
- * Separated from terminal.css so animation timing can be tweaked without
- * risking accidental changes to layout or color rules.
+ * All CSS animations are defined here in one place.
+ * Separating them from terminal.css means you can tweak timing without
+ * accidentally touching layout or colour rules.
  *
- * Each animation is documented with:
- *   - what it looks like
- *   - which element it's applied to
- *   - why it's done this way
+ * A CSS animation has two parts:
+ *   1. A @keyframes rule that defines what changes over time
+ *   2. An animation property on a selector that activates it
  */
 
 
 /* ── Cursor blink ─────────────────────────────────────────────────────
-   step-end (rather than the default "linear") makes the cursor switch
-   between fully visible and fully invisible with no gradual fade.
-   This matches how a real terminal cursor looks.
-   Applied to .cursor in terminal.css.
+   This makes the green cursor rectangle switch between fully visible
+   and fully invisible, mimicking a real terminal cursor.
+
+   "step-end" is the key here — it means "jump to the end state at the
+   end of each step" rather than smoothly interpolating. This gives the
+   cursor a hard on/off switch instead of a fade, which is how real
+   terminal cursors look. Using "linear" or "ease" would give a fading
+   effect that looks wrong for a cursor.
 */
 @keyframes blink {
   0%, 100% { opacity: 1; }
@@ -25,15 +28,20 @@
 
 .cursor {
   animation: blink 1s step-end infinite;
+  /* infinite means it loops forever — appropriate for a cursor */
 }
 
 
-/* ── Banner glow pulse ────────────────────────────────────────────────
-   Alternates between a faint and a brighter text-shadow on the ASCII art,
-   giving it a subtle "breathing" CRT phosphor effect.
-   "alternate" direction means the animation reverses on every other cycle
-   so it smoothly pulses rather than snapping back to the start state.
-   Applied to .banner__art in terminal.css.
+/* ── ASCII banner glow ────────────────────────────────────────────────
+   text-shadow adds a coloured glow around the ASCII art text.
+   The animation alternates between a faint glow and a brighter one,
+   creating a "breathing" or pulsing effect.
+
+   "alternate" direction means the animation plays forward, then BACKWARDS,
+   then forward again — so it smoothly pulses instead of snapping back
+   to the start state at the end of each cycle.
+   "ease-in-out" makes it accelerate into and decelerate out of each end,
+   which looks more organic than a linear transition.
 */
 @keyframes glow-pulse {
   from { text-shadow: 0 0 4px  rgba(133, 232, 157, 0.3); }
@@ -46,12 +54,20 @@
 
 
 /* ── Boot line entrance ───────────────────────────────────────────────
-   Each boot line fades in and rises 2px when it appears.
-   The 2px translateY shift is small enough to be subtle but adds just
-   enough motion to feel like text being printed.
-   js/boot.js sets the animation-delay on each line individually so they
-   stagger — the CSS itself runs the same animation for every line.
-   Applied to .boot__line elements created by js/boot.js.
+   Each boot line starts invisible (opacity: 0, set on .boot__line in
+   terminal.css) and fades in while rising 2px from below.
+
+   The translateY(2px) → translateY(0) shift is subtle — just enough
+   motion to feel like text being printed, without being distracting.
+
+   "forwards" fill mode is important — it means the element keeps the
+   final keyframe state (opacity: 1, translateY: 0) after the animation
+   ends, instead of snapping back to opacity: 0. Without "forwards",
+   every boot line would disappear the moment its animation finished.
+
+   The actual staggered timing (each line appearing after a delay) is
+   handled by JavaScript in boot.js, not here. The CSS just defines what
+   the animation looks like — JS controls when each line's animation starts.
 */
 @keyframes boot-fadein {
   from {
@@ -65,42 +81,37 @@
 }
 
 .boot__line {
-  opacity:   0;   /* start hidden; the animation brings it to opacity: 1 */
+  opacity:   0;   /* start hidden; the animation changes this to 1 */
   animation: boot-fadein 0.15s ease forwards;
-  /*
-    "forwards" fill mode keeps the element at the final keyframe state
-    (opacity: 1) after the animation ends, instead of snapping back to
-    the initial state (opacity: 0).
-  */
 }
 
 
-/* ── Shell section entrance ──────────────────────────────────────────
-   A gentle fade-in when the main shell becomes visible after the boot
-   sequence. Gives the transition from boot → shell a polished feel
-   instead of an abrupt swap.
-   Applied to .shell when the `hidden` attribute is removed by js/boot.js.
+/* ── Shell section fade-in ────────────────────────────────────────────
+   When boot.js removes the `hidden` attribute from the shell section,
+   this animation fires — fading the whole shell in smoothly instead of
+   having it pop into existence abruptly.
+
+   The :not([hidden]) selector targets the element only when it does NOT
+   have the `hidden` attribute. When `hidden` is present, this rule doesn't
+   apply, so the animation only runs at the moment `hidden` is removed.
 */
 @keyframes shell-appear {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
-/*
-  :not([hidden]) targets the shell only when it's visible.
-  This avoids the animation running while the element is still hidden,
-  which would waste a frame and potentially cause a brief flash.
-*/
 .shell:not([hidden]) {
   animation: shell-appear 0.4s ease forwards;
 }
 
 
-/* ── Quick-bar button press ──────────────────────────────────────────
-   A quick scale-down and back gives the button a tactile "click" feel.
-   Using animation instead of a CSS transform on :active means the press
-   effect completes even if the user releases the mouse button immediately.
-   Applied to .quickbar__btn on :active in terminal.css.
+/* ── Quick-bar button press ───────────────────────────────────────────
+   A quick scale-down gives the button a satisfying "press" feeling.
+   Using an animation (rather than just transform on :active) means
+   the shrink-and-return plays out even if the user releases the mouse
+   very quickly — it completes the full motion regardless.
+
+   The :active pseudo-class applies while the mouse button is held down.
 */
 @keyframes btn-pop {
   0%   { transform: scale(1); }

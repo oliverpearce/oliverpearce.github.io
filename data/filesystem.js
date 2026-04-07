@@ -1,30 +1,27 @@
 /**
  * data/filesystem.js
  *
- * Declares the global FILESYSTEM object — the virtual directory tree that
+ * This file defines the FILESYSTEM object — the virtual directory tree that
  * the terminal's ls and cd commands navigate.
  *
- * Structure:
- *   - Each key is an absolute path string, using ~ as the home directory root.
- *   - Each value is an array of entry name strings for that directory.
- *   - Directory entries end with a trailing slash; file entries do not.
- *   - Paths here must have a matching entry in data/files.js to be readable
- *     with `cat` (otherwise js/filesystem.js#isFile returns false).
+ * It's a plain JavaScript object (not a class or function) because we just
+ * need a simple data structure. The key is a directory path, the value is
+ * an array of its contents. This is called a "lookup table" or "map" pattern.
  *
- * To add a new directory:
- *   1. Add a key here with its list of children.
- *   2. Add it as a child entry (with trailing slash) in its parent directory.
- *   3. Add any readable files in data/files.js.
+ * Conventions:
+ *   - All paths start from ~ (which represents the home directory)
+ *   - Directory entries end with a trailing slash, file entries do not
+ *   - Paths never have a trailing slash as keys (js/filesystem.js strips them)
  *
- * Example — adding a "~/blog" directory with one post:
- *   '~/blog':            ['post-01.md'],
- *   // and in the '~' entry: add 'blog/'
- *   // and in data/files.js: add '~/blog/post-01.md': [...]
+ * To add a new project:
+ *   1. Add 'my-project/' as an entry in '~/projects'
+ *   2. Add a '~/projects/my-project' key with its files listed
+ *   3. Add the actual file content to data/files.js
  */
 
 const FILESYSTEM = {
 
-  /* Home directory — the starting point when the terminal loads */
+  /* The home directory — what you see when you first open the terminal */
   '~': [
     'resume.txt',
     'skills.txt',
@@ -32,7 +29,7 @@ const FILESYSTEM = {
     'projects/',
   ],
 
-  /* Top-level projects directory */
+  /* Each project gets its own subdirectory */
   '~/projects': [
     'llm-ctf/',
     'scmac-ios/',
@@ -41,15 +38,15 @@ const FILESYSTEM = {
     'silvered-bot/',
   ],
 
-  /* Project: LLM-assisted offensive security research (undergraduate) */
   '~/projects/llm-ctf': [
     'README.md',
     'benchmark/',
     'walkthroughs/',
   ],
 
-  /* Sub-directories within llm-ctf — no files.js entries needed
-     if they're only meant to be listed, not read with cat */
+  /* These subdirectories exist so you can cd into them, but their files
+     don't have entries in data/files.js so cat won't work on them —
+     they're just listed for realism */
   '~/projects/llm-ctf/benchmark': [
     'challenges.json',
     'scoring.py',
@@ -60,25 +57,21 @@ const FILESYSTEM = {
     'chall-02.md',
   ],
 
-  /* Project: iOS app for the Santa Cruz Mountains Art Center (UCSC BluePrint) */
   '~/projects/scmac-ios': [
     'README.md',
     'AppStore.url',
   ],
 
-  /* Project: Real-time collaborative study sessions (hackathon) */
   '~/projects/study-buddy': [
     'README.md',
     'devpost.url',
   ],
 
-  /* Project: Navigation map enhancement using U-Net + VAE (ACM AI Lab) */
   '~/projects/acm-ai-lab': [
     'README.md',
     'research-manuscript.url',
   ],
 
-  /* Project: Discord bot with live Pokémon guessing game */
   '~/projects/silvered-bot': [
     'README.md',
     'source.url',

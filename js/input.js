@@ -1,57 +1,39 @@
 /**
  * js/input.js
  *
- * Handles all user input: keyboard events on the text field, command history
- * navigation with arrow keys, Tab autocomplete, and quick-bar button clicks.
+ * Handles all user input: keyboard events, command history (arrow keys),
+ * Tab autocomplete, and quick-bar button clicks.
  *
- * Deliberately stateless with respect to the terminal's cwd and command
- * output — it only knows how to capture input and call the onSubmit callback.
- * All command logic lives in js/commands.js.
- *
- * Public API:
- *   Input.init(onSubmit) — wire up all event listeners; call once after DOM is ready
- *   Input.focus()        — focus the text input field
- *
- * To add a command to Tab autocomplete:
- *   Add it to the AUTOCOMPLETE_COMMANDS array below.
+ * This module is intentionally kept simple — it just captures input and
+ * calls the onSubmit callback. It doesn't know what cwd is or what any
+ * command does. That logic lives in commands.js. Keeping responsibilities
+ * separate like this is called "separation of concerns."
  */
 
 const Input = (() => {
 
-  /* ── Private state ──────────────────────────────────────────────── */
+  /*
+    Command history is stored as an array, most-recent-first (newest at index 0).
+    We use unshift() to prepend new commands instead of push() so that index 0
+    always gives the last command typed — which is what ArrowUp should show first.
 
-  /**
-   * Command history — most recent command first.
-   * Commands are prepended (unshift) rather than appended so that
-   * ArrowUp always retrieves the most recent command at index 0.
-   * @type {string[]}
-   */
+    _histIdx tracks which history entry we're currently viewing while the user
+    is navigating. -1 means they're at the "live" input (not browsing history).
+  */
   const _history = [];
+  let   _histIdx  = -1;
 
-  /**
-   * Current position in the history array while the user is navigating.
-   * -1 means the user is at the "live" position (not browsing history).
-   * @type {number}
-   */
-  let _histIdx = -1;
-
-  /** @type {HTMLInputElement} */
-  let _inputEl = null;
-
-  /** @type {function(string): void} */
+  let _inputEl  = null;
   let _onSubmit = null;
 
-  /* ── Autocomplete candidates ────────────────────────────────────── */
+  /*
+    The autocomplete candidates are all the commands we know about.
+    Tab completion does prefix matching: if what you've typed so far is a
+    prefix of exactly one item in this list, it completes to that item.
 
-  /**
-   * Known commands and paths for Tab completion.
-   * Matched by prefix: if the current input is a prefix of exactly one
-   * entry, the input is replaced with the full entry. If multiple entries
-   * match, they are printed to the output (not yet implemented — see _autocomplete).
-   *
-   * Keep this in sync with the COMMANDS map in js/commands.js and the
-   * quick-bar buttons in index.html.
-   */
+    This list should stay in sync with the COMMANDS map in commands.js
+    so users can Tab-complete every available command.
+  */
   const AUTOCOMPLETE_COMMANDS = [
     'help',
     'whoami',
@@ -71,41 +53,23 @@ const Input = (() => {
     'uname -a',
     'date',
     'clear',
-    /* Easter eggs are intentionally excluded — they're meant to be discovered */
   ];
 
-
-  /* ── Private functions ──────────────────────────────────────────── */
-
-  /**
-   * Submit a command: add it to history, reset the history cursor,
-   * and call the onSubmit callback with the raw (untrimmed) string.
-   *
-   * We only add non-empty, non-whitespace commands to history — submitting
-   * an empty Enter press shouldn't push a blank entry.
-   *
-   * @param {string} cmd - the raw string from the input field
-   */
+  /*
+    _submit() is called whenever a command should be executed — either from
+    Enter being pressed or a button being clicked. It adds the command to
+    history (if non-empty), resets the history cursor back to -1 (so the
+    next ArrowUp starts from the most recent command), then calls onSubmit.
+  */
   function _submit(cmd) {
     const trimmed = cmd.trim();
     if (trimmed) {
-      _history.unshift(trimmed); /* prepend so index 0 is always most recent */
-      _histIdx = -1;             /* reset cursor to "live" position */
+      _history.unshift(trimmed);
+      _histIdx = -1;
     }
     _onSubmit(cmd);
   }
 
-  /**
-   * Handle all relevant keyboard events on the input field.
-   *
-   * Arrow keys navigate command history. preventDefault() on ArrowUp/Down
-   * stops the browser from moving the text cursor to the start/end of the field.
-   *
-   * Tab triggers prefix autocomplete. preventDefault() stops the browser from
-   * moving focus to the next focusable element (standard Tab behaviour).
-   *
-   * @param {KeyboardEvent} e
-   */
   function _onKeydown(e) {
     switch (e.key) {
 
@@ -117,18 +81,21 @@ const Input = (() => {
       }
 
       case 'ArrowUp': {
-        e.preventDefault();
         /*
-          Walk back through history (higher index = older command).
-          Stop at the oldest entry (length - 1) to avoid going out of bounds.
+          preventDefault() stops the browser's default ArrowUp behaviour,
+          which is to move the text cursor to the beginning of the input.
+          We want ArrowUp to navigate history instead.
         */
+        e.preventDefault();
         if (_histIdx < _history.length - 1) {
           _histIdx++;
           _inputEl.value = _history[_histIdx];
           /*
-            setTimeout 0 defers the selection change until after the browser
-            has finished processing the keydown event. Without this, some
-            browsers reset the cursor position after we set it.
+            setTimeout with delay 0 defers this code until the current
+            event has finished processing. Without it, some browsers reset
+            the cursor position after we set it, because the keydown event
+            handler runs before the browser moves the cursor.
+            Wrapping in setTimeout(fn, 0) schedules it for the next "tick".
           */
           setTimeout(() => _inputEl.setSelectionRange(
             _inputEl.value.length,
@@ -141,7 +108,6 @@ const Input = (() => {
       case 'ArrowDown': {
         e.preventDefault();
         if (_histIdx > 0) {
-          /* Walk forward through history */
           _histIdx--;
           _inputEl.value = _history[_histIdx];
         } else {
@@ -153,6 +119,11 @@ const Input = (() => {
       }
 
       case 'Tab': {
+        /*
+          preventDefault() stops the browser's default Tab behaviour,
+          which is to move keyboard focus to the next focusable element.
+          We want Tab to autocomplete instead.
+        */
         e.preventDefault();
         _autocomplete();
         break;
@@ -160,57 +131,43 @@ const Input = (() => {
     }
   }
 
-  /**
-   * Attempt to autocomplete the current input using AUTOCOMPLETE_COMMANDS.
-   *
-   * Single match  → replace the input with the full command.
-   * Multiple matches → (future enhancement) could print the options to output.
-   * No match      → do nothing.
-   *
-   * Matching is case-sensitive and prefix-based (startsWith), mirroring how
-   * bash Tab completion works.
-   */
   function _autocomplete() {
     const val = _inputEl.value;
-    if (!val) return; /* nothing to complete */
+    if (!val) return;
 
+    /*
+      filter() returns a new array containing only items where the callback
+      returns true. startsWith() checks if a string begins with another string.
+      We exclude the exact match (c !== val) so Tab on a complete command
+      doesn't do anything — only partial matches get completed.
+    */
     const matches = AUTOCOMPLETE_COMMANDS.filter(
-      candidate => candidate.startsWith(val) && candidate !== val
+      c => c.startsWith(val) && c !== val
     );
 
     if (matches.length === 1) {
-      /* Unambiguous match — complete it */
+      /* Only one match — complete it */
       _inputEl.value = matches[0];
     }
-    /*
-      If matches.length > 1, we could show options — left as a future enhancement.
-      If matches.length === 0, we do nothing (standard shell behaviour).
-    */
+    /* Multiple matches: we could print options to the output in the future.
+       For now, we do nothing, which is what bash does when there's ambiguity. */
   }
 
-
-  /* ── Public functions ───────────────────────────────────────────── */
-
-  /**
-   * Wire up all event listeners. Must be called once after the shell section
-   * becomes visible (because the #cmd-input and .quickbar__btn elements must
-   * exist in the DOM before we can query them).
-   *
-   * @param {function(string): void} onSubmit - called with the raw command string
-   *                                            whenever the user submits a command
-   */
+  /*
+    init() wires up all the event listeners. It's called by main.js after
+    the shell section is revealed — we need the DOM elements to exist first.
+  */
   function init(onSubmit) {
     _onSubmit = onSubmit;
     _inputEl  = document.getElementById('cmd-input');
 
-    /* Main keyboard handler */
     _inputEl.addEventListener('keydown', _onKeydown);
 
     /*
-      Quick-bar buttons: clicking a button fires the command stored in its
-      data-cmd attribute, exactly as if the user had typed it and pressed Enter.
-      querySelectorAll returns a static NodeList; forEach is available on it
-      in all modern browsers without conversion.
+      querySelectorAll() returns a NodeList of all matching elements.
+      We loop over it with forEach to attach a click listener to each button.
+      Each button stores its command in a data-cmd HTML attribute,
+      which JavaScript reads as btn.dataset.cmd.
     */
     document.querySelectorAll('.quickbar__btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -220,29 +177,21 @@ const Input = (() => {
     });
 
     /*
-      Click anywhere inside the terminal to re-focus the input field.
-      Without this, clicking on output text or the quick bar would pull focus
-      away from the input and the user would have to click the field manually.
-
-      The terminal element is used (not document) to avoid stealing focus from
-      links — clicks on .terminal-link anchors bubble up to terminal but the
-      link's default action (opening the URL) still fires first.
+      Clicking anywhere inside #terminal re-focuses the input field.
+      We attach this to #terminal (not to document) so that clicking on
+      .terminal-link anchor tags doesn't get caught here — the link's
+      default action (opening the URL) should still happen normally.
+      Event bubbling means a click anywhere inside #terminal will
+      trigger this listener.
     */
     document.getElementById('terminal').addEventListener('click', () => {
       _inputEl.focus();
     });
   }
 
-  /**
-   * Programmatically focus the input field.
-   * Called by js/main.js immediately after the shell becomes visible
-   * so the user can start typing without clicking first.
-   */
   function focus() {
     _inputEl.focus();
   }
-
-  /* ── Public API ─────────────────────────────────────────────────── */
 
   return { init, focus };
 

@@ -1,117 +1,87 @@
 /**
  * js/filesystem.js
  *
- * Virtual filesystem logic: path resolution, directory listing, and file reading.
- * All actual data lives in data/filesystem.js (FILESYSTEM global) and
- * data/files.js (FILES global) — this module just provides the query functions.
+ * Path resolution and queries against the FILESYSTEM and FILES globals.
  *
- * Keeping path logic here (not scattered across command handlers) means:
- *   - One place to fix a path-resolution bug
- *   - Commands stay focused on output, not path arithmetic
- *   - Easy to unit-test in isolation if tests are ever added
+ * All the path arithmetic (joining paths, going up a level with .., etc.)
+ * is centralised here so command handlers in commands.js never have to do
+ * string manipulation themselves. This follows the "separation of concerns"
+ * principle — each file has one job.
  *
- * Public API:
- *   Filesystem.resolve(arg, cwd) → string
- *   Filesystem.isDir(path)       → boolean
- *   Filesystem.isFile(path)      → boolean
- *   Filesystem.listDir(path)     → string[] | null
- *   Filesystem.readFile(path)    → Array<[string, string, string?]> | null
+ * The FILESYSTEM and FILES variables are not defined here — they come from
+ * data/filesystem.js and data/files.js, which load before this file
+ * (see the script load order at the bottom of index.html).
  */
 
 const Filesystem = (() => {
 
-  /**
-   * Resolve a path argument (from a user command) into a normalised absolute path.
-   *
-   * All paths in FILESYSTEM and FILES use ~ as the home root and never have
-   * a trailing slash. This function ensures every lookup key is in that form.
-   *
-   * Resolution rules (evaluated in order):
-   *   1. Empty string or '~'     → '~'  (home)
-   *   2. Starts with '~/'        → strip trailing slash, return as-is (already absolute)
-   *   3. '..' or '../'           → go up one level from cwd
-   *   4. Everything else         → append to cwd as a relative path
-   *
-   * Examples:
-   *   resolve('projects/',    '~')              → '~/projects'
-   *   resolve('..',           '~/projects/llm') → '~/projects'
-   *   resolve('~/resume.txt', '~/projects')     → '~/resume.txt'
-   *   resolve('README.md',    '~/projects/llm') → '~/projects/llm/README.md'
-   *
-   * @param {string} arg - the path argument from a user command (may be relative)
-   * @param {string} cwd - current working directory (always a normalised absolute path)
-   * @returns {string}   - normalised absolute path, no trailing slash
-   */
+  /*
+    resolve() converts a path argument from a user command into the normalised
+    absolute path format used as keys in FILESYSTEM and FILES.
+
+    All keys in those objects start with ~ and never have a trailing slash.
+    For example: '~', '~/projects', '~/projects/llm-ctf/README.md'
+
+    The function handles four cases:
+      1. Empty string or '~' → always means home
+      2. Starts with '~/'   → already absolute, just clean the trailing slash
+      3. '..' or '../'      → go up one directory level
+      4. Anything else      → treat as a relative path and join with cwd
+
+    Examples of what resolve() does:
+      resolve('projects/',    '~')                  → '~/projects'
+      resolve('..',           '~/projects/llm-ctf') → '~/projects'
+      resolve('~/resume.txt', '~/projects')         → '~/resume.txt'
+      resolve('README.md',    '~/projects/llm-ctf') → '~/projects/llm-ctf/README.md'
+  */
   function resolve(arg, cwd) {
     if (!arg || arg === '~') return '~';
 
-    /* Already an absolute path from home — just clean the trailing slash */
     if (arg.startsWith('~/')) return arg.replace(/\/$/, '');
 
-    /* Go up one level: split on '/', drop the last segment, rejoin */
     if (arg === '..' || arg === '../') {
-      const parts = cwd.split('/');
       /*
-        If cwd is '~' it has only one segment so splitting gives ['~'].
-        Dropping the last element of a single-element array would give an
-        empty string — we guard against that by returning '~' directly.
+        split('/') breaks the path into an array of segments.
+        For '~/projects/llm-ctf', that gives ['~', 'projects', 'llm-ctf'].
+        slice(0, -1) removes the last element: ['~', 'projects'].
+        join('/') reassembles it: '~/projects'.
+        If we're already at '~', splitting gives ['~'] (length 1), and
+        removing the last element would give an empty array — so we return '~'.
       */
+      const parts = cwd.split('/');
       return parts.length > 1 ? parts.slice(0, -1).join('/') : '~';
     }
 
-    /* Relative path: append to cwd, then strip any trailing slash */
-    const base = cwd;
-    return (base + '/' + arg).replace(/\/$/, '');
+    /* Relative path: join cwd + '/' + arg, then strip any trailing slash */
+    return (cwd + '/' + arg).replace(/\/$/, '');
   }
 
-  /**
-   * Return true if path is a known directory in FILESYSTEM.
-   *
-   * Uses hasOwnProperty rather than `path in FILESYSTEM` because `in` also
-   * checks the prototype chain — a key like "constructor" would match
-   * Object.prototype.constructor otherwise.
-   *
-   * @param {string} path - normalised absolute path (no trailing slash)
-   * @returns {boolean}
-   */
+  /*
+    We use Object.prototype.hasOwnProperty.call() instead of the simpler
+    (path in FILESYSTEM) because the `in` operator also checks the object's
+    prototype chain. This means a path like "constructor" or "toString" would
+    incorrectly return true. hasOwnProperty only checks the object's own keys.
+  */
   function isDir(path) {
     return Object.prototype.hasOwnProperty.call(FILESYSTEM, path);
   }
 
-  /**
-   * Return true if path is a known file in FILES.
-   *
-   * @param {string} path - normalised absolute path (no trailing slash)
-   * @returns {boolean}
-   */
   function isFile(path) {
     return Object.prototype.hasOwnProperty.call(FILES, path);
   }
 
-  /**
-   * Return the list of entries in a directory, or null if not found.
-   * Each entry is a string: files have no trailing slash, directories do.
-   *
-   * @param {string} path - normalised absolute path
-   * @returns {string[] | null}
-   */
+  /*
+    Returns the array of entries for a directory, or null if not found.
+    The || null means "return null instead of undefined" if the key doesn't
+    exist — null is a more explicit signal of "not found" than undefined.
+  */
   function listDir(path) {
     return FILESYSTEM[path] || null;
   }
 
-  /**
-   * Return the content rows for a file, or null if not found.
-   * Each row is a [colorClass, text] or [colorClass, text, url] tuple,
-   * matching the format defined in data/files.js.
-   *
-   * @param {string} path - normalised absolute path
-   * @returns {Array<[string, string, string?]> | null}
-   */
   function readFile(path) {
     return FILES[path] || null;
   }
-
-  /* ── Public API ─────────────────────────────────────────────────── */
 
   return { resolve, isDir, isFile, listDir, readFile };
 

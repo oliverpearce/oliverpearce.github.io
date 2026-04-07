@@ -1,38 +1,37 @@
 /**
  * data/files.js
  *
- * Declares the global FILES object — the content of every readable file
- * in the virtual filesystem. This is what the `cat` command displays.
+ * The content of every readable file in the virtual filesystem.
+ * This is the only file you should need to edit to update portfolio content.
  *
  * Structure:
- *   Each key is an absolute path matching a file listed in data/filesystem.js.
- *   Each value is an array of line tuples with 2 or 3 elements:
+ *   Each key is an absolute path matching an entry in data/filesystem.js.
+ *   Each value is an array of "line tuples" — small arrays describing one
+ *   line of output.
  *
- *     [colorClass, text]
- *     [colorClass, text, url]   ← renders as a clickable <a> link
+ * Line tuple format:
+ *   [colorClass, text]         — a plain coloured line
+ *   [colorClass, text, url]    — same, but clicking it opens the URL
  *
- *   colorClass must match one of the .line--{class} rules in terminal.css:
- *     'default'  muted grey    — body text, descriptions
- *     'white'    bright white  — important facts, names, titles
- *     'green'    terminal green — section borders, status "OK"
- *     'blue'     soft blue     — links, info text
- *     'gold'     amber/gold    — section labels, keys in key/value pairs
- *     'red'      red/pink      — errors, warnings
- *     'purple'   soft purple   — accent (used sparingly)
- *     'link'     blue underlined clickable — shorthand for blue + anchor
- *     'blank'    empty line    — vertical spacing (text value is ignored)
+ *   colorClass is a string that maps to a CSS class (.line--{colorClass})
+ *   defined in terminal.css. Available options:
+ *     'default'  → muted grey (body text, descriptions)
+ *     'white'    → bright white (names, important facts)
+ *     'green'    → terminal green (section borders, status)
+ *     'blue'     → soft blue (informational text)
+ *     'gold'     → amber/gold (section labels, keys)
+ *     'red'      → red/pink (errors, warnings)
+ *     'link'     → blue with underline, always clickable
+ *     'blank'    → an empty spacer line (the text value is ignored)
  *
- *   The third element (url) is optional. When provided, output.js wraps
- *   the line in an <a> tag so it opens in a new tab on click.
- *   For 'link' color class, the url defaults to normalising the text itself
- *   if no third argument is supplied (see js/output.js#_toHref).
+ * When a third element (url) is present, output.js wraps the line in an
+ * <a> tag so it opens in a new tab when clicked. The 'link' colorClass
+ * is a shorthand that implies blue + clickable without needing to repeat
+ * the URL if the text IS the URL (output.js normalises bare domains).
  *
- * To add a new file:
- *   1. Add the filename to the correct directory in data/filesystem.js.
- *   2. Add a key here with the full path and its line array.
- *
- * Box-drawing characters used for headers (copy/paste friendly):
- *   ╔ ╗ ╚ ╝ ║ ═
+ * The box-drawing characters used for headers (╔ ╗ ╚ ╝ ║ ═) are Unicode
+ * characters — you can copy them from here or find more at:
+ * https://www.w3.org/TR/xml-entity-names/025.html
  */
 
 const FILES = {
@@ -54,19 +53,19 @@ const FILES = {
     ['gold',    'EXPERIENCE'],
 
     ['white',   '  Undergraduate Researcher — UCSC (Offensive Security / LLMs)'],
-    ['default', '    → Evaluated autonomous CTF-solving capabilities of multi-agentic LLM frameworks'],
+    ['default', '    → Evaluated autonomous CTF-solving of multi-agentic LLM frameworks'],
     ['default', '    → Built structured benchmark of 25+ RE & exploitation challenges'],
     ['default', '    → Paper currently being published'],
     ['blank',   ''],
 
     ['white',   '  iOS Engineer — UCSC BluePrint (Nonprofit Tech)'],
-    ['default', '    → Built login, user profile backend & UI for Santa Cruz Mountains Art Center app'],
+    ['default', '    → Login, user profile backend & UI for Santa Cruz Mountains Art Center'],
     ['default', '    → Published on the Apple App Store'],
     ['blank',   ''],
 
     ['white',   '  Undergraduate Researcher — UCSC ACM AI Lab'],
-    ['default', '    → Co-authored manuscript on enhancing navigation map data with U-Net & VAE'],
-    ['default', '    → Tested high-performance architectures from cutting-edge AI research papers'],
+    ['default', '    → Co-authored manuscript on navigation map data with U-Net & VAE'],
+    ['default', '    → Tested architectures from cutting-edge AI research papers'],
     ['blank',   ''],
 
     ['white',   '  Residential Assistant — John R. Lewis College, UCSC'],
@@ -75,7 +74,7 @@ const FILES = {
     ['blank',   ''],
 
     ['gold',    'LINKS'],
-    /* Third element is the URL — output.js opens it in a new tab on click */
+    /* The third element is the full URL — output.js uses this to make the line clickable */
     ['link', '  Resume PDF  →  drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
     ['link', '  LinkedIn   →  linkedin.com/in/oliverjpearce',                               'https://linkedin.com/in/oliverjpearce'],
     ['link', '  GitHub     →  github.com/oliverpearce',                                     'https://github.com/oliverpearce'],
@@ -92,7 +91,7 @@ const FILES = {
     ['blank',   ''],
 
     ['gold',    'OFFENSIVE SECURITY'],
-    /* ASCII progress bars: # = filled, - = empty, number = percentage */
+    /* The progress bars are just regular text using # and - characters */
     ['white',   '  [##########] CTF Challenges (RE + Exploitation)  100%'],
     ['white',   '  [#########-] LLM-Assisted Offensive Research      90%'],
     ['white',   '  [########--] Reverse Engineering                   80%'],
@@ -130,7 +129,7 @@ const FILES = {
     ['white',   '  Location  Santa Cruz, CA'],
     ['blank',   ''],
 
-    /* 'link' color class + explicit url → clickable mailto and http links */
+    /* Using 'link' colorClass with explicit url for mailto and https links */
     ['gold',    '  Email'],
     ['link',    '            OliverPearce13@gmail.com',      'mailto:OliverPearce13@gmail.com'],
     ['gold',    '  LinkedIn'],
@@ -154,7 +153,7 @@ const FILES = {
     ['blank',   ''],
 
     ['default', '  Researched the offensive security capabilities of a'],
-    ['default', '  multi-agentic LLM framework by evaluating its autonomous'],
+    ['default', '  multi-agentic LLM framework by evaluating autonomous'],
     ['default', '  CTF-solving on a custom-built benchmark.'],
     ['blank',   ''],
 

@@ -1,65 +1,89 @@
 /**
  * js/commands.js
  *
- * Command router and all built-in command handler implementations.
+ * The command router and all command handler implementations.
  *
  * How it works:
- *   Commands.execute(rawCmd, cwd, setCwd) is called by js/main.js on every
- *   submission. It trims whitespace, checks for easter eggs, then routes to
- *   the appropriate handler function based on the first word (the "verb").
+ *   When the user types a command and presses Enter, main.js calls
+ *   Commands.execute(). That function splits the input into a verb ("ls")
+ *   and arguments (["projects/"]), then looks up the verb in the COMMANDS
+ *   map to find the right handler function and calls it.
  *
  * Adding a new command:
- *   1. Write a handler function following the ctx pattern below.
- *   2. Add it to the COMMANDS map.
- *   3. Add it to the help text in cmdHelp().
- *   4. Optionally add it to the autocomplete list in js/input.js.
+ *   1. Write a handler function below (follow the ctx pattern)
+ *   2. Add it to the COMMANDS map
+ *   3. Add it to the bubbles list in cmdHelp()
+ *   4. Add it to AUTOCOMPLETE_COMMANDS in input.js
+ *   5. Add a button in the quickbar in index.html (optional)
  *
- * Handler contract:
- *   - Receives a context object: { args, rawCmd, cwd, setCwd }
- *       args    — array of space-separated arguments after the verb
- *       rawCmd  — the full original command string (useful for error messages)
- *       cwd     — current working directory string
- *       setCwd  — function(newPath) to update the cwd (used only by cmdCd)
- *   - Uses Output.* to write output lines
- *   - Returns nothing
- *
- * Public API:
- *   Commands.execute(rawCmd, cwd, setCwd)
+ * Handler pattern:
+ *   Every handler receives a context object with:
+ *     args    — array of words after the command (e.g. ['resume.txt'])
+ *     rawCmd  — the full original string (useful for error messages)
+ *     cwd     — the current directory path (e.g. '~/projects')
+ *     setCwd  — function to change directory (only used by cd)
+ *   Handlers use Output.* to write output and return nothing.
  */
 
 const Commands = (() => {
 
-  /* ── Command handlers ───────────────────────────────────────────── */
+  /* ── Command handlers ─────────────────────────────────────────── */
 
-  /**
-   * help — list all available commands.
-   * Keep this in sync with the COMMANDS map below and js/input.js autocomplete.
-   */
   function cmdHelp() {
-    Output.addLines([
-      ['green',   '╔══════════════════════════════════════════════════════╗'],
-      ['green',   '║               AVAILABLE COMMANDS                    ║'],
-      ['green',   '╚══════════════════════════════════════════════════════╝'],
-      ['blank',   ''],
-      ['gold',    '  whoami              Who is Oliver?'],
-      ['gold',    '  ls [path]           List directory contents'],
-      ['gold',    '  cd [path]           Change directory'],
-      ['gold',    '  cat [file]          Read a file'],
-      ['gold',    '  uname [-a]          System info'],
-      ['gold',    '  date                Current date & time'],
-      ['gold',    '  pwd                 Print working directory'],
-      ['gold',    '  clear               Clear terminal'],
-      ['blank',   ''],
-      ['default', '  Hint: there are hidden easter egg commands 👀'],
-      ['default', '        try: matrix, fortune, cowsay, ping oliverjpearce.com'],
-    ]);
+    Output.addLine('default', 'Available commands — click to run:');
+    Output.addLine('blank', '');
+
+    /*
+      Each entry is [commandString, displayLabel].
+      They're the same here, but keeping them separate means you could
+      show a friendlier label like "read resume" while running "cat resume.txt".
+    */
+    const bubbles = [
+      ['whoami',                              'whoami'],
+      ['ls',                                  'ls'],
+      ['cat resume.txt',                      'cat resume.txt'],
+      ['cat skills.txt',                      'cat skills.txt'],
+      ['cat contact.txt',                     'cat contact.txt'],
+      ['ls projects/',                        'ls projects/'],
+      ['cd projects/',                        'cd projects/'],
+      ['cat projects/llm-ctf/README.md',      'cat projects/llm-ctf/README.md'],
+      ['cat projects/scmac-ios/README.md',    'cat projects/scmac-ios/README.md'],
+      ['cat projects/study-buddy/README.md',  'cat projects/study-buddy/README.md'],
+      ['cat projects/acm-ai-lab/README.md',   'cat projects/acm-ai-lab/README.md'],
+      ['cat projects/silvered-bot/README.md', 'cat projects/silvered-bot/README.md'],
+      ['uname -a',                            'uname -a'],
+      ['date',                                'date'],
+      ['clear',                               'clear'],
+    ];
+
+    /*
+      We render bubbles in rows of 4 using a simple loop.
+      i starts at 0, jumps by ROW_SIZE each iteration.
+      slice(i, i + ROW_SIZE) extracts the next chunk of up to 4 items.
+      This is a common pattern for chunking an array into rows.
+    */
+    const ROW_SIZE = 4;
+    for (let i = 0; i < bubbles.length; i += ROW_SIZE) {
+      const row  = bubbles.slice(i, i + ROW_SIZE);
+      /*
+        Template literals (backtick strings) let us embed JavaScript expressions
+        inside strings using ${expression} syntax. We're building an HTML string
+        here rather than creating DOM elements one by one because it's more
+        readable when constructing many similar elements at once.
+        Output.esc() sanitises the command strings before inserting them.
+      */
+      const html = row
+        .map(([cmd, label]) =>
+          `<button class="cmd-bubble" data-cmd="${Output.esc(cmd)}">${Output.esc(label)}</button>`
+        )
+        .join('');
+      Output.addHTML(html);
+    }
+
+    /* Wire click listeners to the bubbles we just injected */
+    _attachBubbleListeners();
   }
 
-  /**
-   * whoami — print a short bio of Oliver.
-   * This is the first thing most visitors will run, so it should be
-   * concise, personal, and tell them the most important things quickly.
-   */
   function cmdWhoami() {
     Output.addLines([
       ['green',   'Oliver Pearce — Software Engineer & Security Researcher'],
@@ -70,88 +94,56 @@ const Commands = (() => {
     ]);
   }
 
-  /**
-   * uname — print system information.
-   * Matches the real `uname -a` output format from a Kali Linux machine
-   * to reinforce the terminal aesthetic. The flag value (-a) is ignored
-   * because it always returns the same string; we handle any `uname` call here.
-   */
   function cmdUname() {
-    Output.addLine(
-      'default',
-      'Linux kali 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.6.9-1kali1 x86_64 GNU/Linux'
-    );
+    /* Returns a realistic Linux system info string matching Kali Linux format */
+    Output.addLine('default', 'Linux kali 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.6.9-1kali1 x86_64 GNU/Linux');
   }
 
-  /**
-   * date — print the current date and time.
-   * Uses the real system clock via new Date() so the output is always accurate.
-   * Also registered as an easter egg in data/easter-eggs.js (value: null) so
-   * handleEasterEgg() routes it here rather than looking it up in the static map.
-   */
   function cmdDate() {
+    /* new Date().toString() gives the current time in the user's local timezone */
     Output.addLine('white', new Date().toString());
   }
 
-  /**
-   * ls [path] — list the contents of a directory.
-   *
-   * Directories are rendered in blue, files in green — matching the default
-   * color scheme most Linux terminals use for `ls --color=auto`.
-   *
-   * We use Output.addHTML() here because we need per-entry <span> coloring
-   * on a single line, which addLine() can't express as a single tuple.
-   *
-   * @param {{ args: string[], cwd: string }} ctx
-   */
   function cmdLs({ args, cwd }) {
-    /* Default to the current directory if no path argument was given */
-    const arg       = args[0] || null;
+    /* Default to current directory if no argument provided */
+    const arg        = args[0] || null;
     const targetPath = arg ? Filesystem.resolve(arg, cwd) : cwd;
-    const entries   = Filesystem.listDir(targetPath);
+    const entries    = Filesystem.listDir(targetPath);
 
     if (entries) {
       /*
-        Build a single HTML string with colour-coded spans.
-        Directories (entries ending in '/') get --blue, files get --green.
-        Output.esc() is called on each entry name to prevent accidental
-        HTML injection if an entry name ever contains special characters.
+        We build one HTML string with colour-coded spans, then inject it via
+        addHTML(). Directories get blue, files get green — matching the colour
+        scheme of `ls --color=auto` on most Linux systems.
+        We join with four spaces to mimic the default ls column spacing.
       */
       const html = entries
-        .map(entry =>
-          entry.endsWith('/')
-            ? `<span class="line--blue">${Output.esc(entry)}</span>`
-            : `<span class="line--green">${Output.esc(entry)}</span>`
+        .map(e =>
+          e.endsWith('/')
+            ? `<span class="line--blue">${Output.esc(e)}</span>`
+            : `<span class="line--green">${Output.esc(e)}</span>`
         )
-        .join('    ');  /* four spaces between entries, like `ls` */
+        .join('    ');
       Output.addHTML(html);
-
     } else if (Filesystem.isFile(targetPath)) {
-      /* User tried to ls a file rather than a directory */
       Output.addLine('red', `ls: cannot access '${arg}': Not a directory`);
-
     } else {
-      /* Path doesn't exist at all */
       Output.addLine('red', `ls: cannot access '${arg || '.'}': No such file or directory`);
     }
   }
 
-  /**
-   * cd [path] — change the current working directory.
-   *
-   * setCwd is a function provided by main.js that updates both the internal
-   * cwd variable and the visible path in the prompt and title bar.
-   * We call it only on success — on failure we just print an error and leave
-   * cwd unchanged.
-   *
-   * @param {{ args: string[], cwd: string, setCwd: function }} ctx
-   */
   function cmdCd({ args, cwd, setCwd }) {
-    /* cd with no argument goes home, matching standard shell behaviour */
+    /* With no argument, `cd` goes home — this matches real shell behaviour */
     const arg    = args[0] || '~';
     const target = Filesystem.resolve(arg, cwd);
 
     if (Filesystem.isDir(target)) {
+      /*
+        setCwd is passed in from main.js — we don't update cwd directly here
+        because cwd lives in main.js and this handler shouldn't know about that.
+        This is called "dependency injection" — the dependency (setCwd) is
+        passed in rather than imported, keeping this module loosely coupled.
+      */
       setCwd(target);
     } else if (Filesystem.isFile(target)) {
       Output.addLine('red', `bash: cd: ${arg}: Not a directory`);
@@ -160,18 +152,9 @@ const Commands = (() => {
     }
   }
 
-  /**
-   * cat [file] — display the contents of a file.
-   *
-   * File content is stored as line tuples in data/files.js and rendered
-   * by Output.addLines(). Clickable links are handled transparently by
-   * Output.addLine() when a tuple has a third (url) element.
-   *
-   * @param {{ args: string[], cwd: string }} ctx
-   */
   function cmdCat({ args, cwd }) {
     if (!args[0]) {
-      /* Real cat with no args reads from stdin. We just explain why we can't. */
+      /* Real `cat` with no args reads from stdin — we just explain we can't do that */
       Output.addLine('default', '(reading from stdin — press Ctrl+C to cancel)');
       return;
     }
@@ -181,6 +164,10 @@ const Commands = (() => {
     const content = Filesystem.readFile(target);
 
     if (content) {
+      /*
+        addLines() handles the full tuple format [colorClass, text, url?] from
+        data/files.js — including making links clickable automatically.
+      */
       Output.addLines(content);
     } else if (Filesystem.isDir(target)) {
       Output.addLine('red', `cat: ${arg}: Is a directory`);
@@ -190,53 +177,13 @@ const Commands = (() => {
   }
 
 
-  /* ── Easter egg handler ─────────────────────────────────────────── */
+  /* ── Command map ──────────────────────────────────────────────── */
 
-  /**
-   * Check whether rawCmd is an easter egg and handle it if so.
-   *
-   * Checked before the normal command router so easter eggs can shadow
-   * real commands (e.g. 'history' returns the curated fake history from
-   * EASTER_EGGS rather than the live Input._history array).
-   *
-   * Returns true if the command was handled (so the router can stop),
-   * false if it wasn't (so the router continues normally).
-   *
-   * @param {string} rawCmd
-   * @returns {boolean}
-   */
-  function _handleEasterEgg(rawCmd) {
-    /* 'date' is dynamic — its output depends on the current time — so it
-       can't be a static string in EASTER_EGGS. We handle it here instead. */
-    if (rawCmd === 'date') {
-      cmdDate();
-      return true;
-    }
-
-    const entry = EASTER_EGGS[rawCmd];
-
-    /* Not in the map at all → not an easter egg */
-    if (entry === undefined) return false;
-
-    /* null is the sentinel value for "handled dynamically elsewhere" — if
-       we reach this with null it means we forgot to add a dynamic handler above */
-    if (entry === null) return false;
-
-    /* Static output array → render it */
-    Output.addLines(entry);
-    return true;
-  }
-
-
-  /* ── Command router ─────────────────────────────────────────────── */
-
-  /**
-   * Map of verb strings to handler functions.
-   * All handler functions follow the ctx = { args, rawCmd, cwd, setCwd } pattern.
-   *
-   * To add a new command: add a handler function above, then add it here.
-   * The key must be the exact string the user types as the first word.
-   */
+  /*
+    An object used as a lookup table: verb string → handler function.
+    This is more maintainable than a long if/else or switch statement —
+    adding a command is just adding one line to this object.
+  */
   const COMMANDS = {
     help:   cmdHelp,
     whoami: cmdWhoami,
@@ -247,63 +194,74 @@ const Commands = (() => {
     cat:    cmdCat,
   };
 
-  /**
-   * Parse and execute a raw command string.
-   * Called by js/main.js on every user submission (keypress or button click).
-   *
-   * Execution order:
-   *   1. Trim and bail on empty input
-   *   2. Handle `clear` specially (no prompt echo, just wipe output)
-   *   3. Echo the prompt + command to the output log
-   *   4. Check easter eggs (may short-circuit here)
-   *   5. Parse verb and args; dispatch to the matching handler
-   *   6. If no handler found, print "command not found"
-   *   7. Scroll to the bottom
-   *
-   * @param {string}   rawCmd - the full command string from the input field
-   * @param {string}   cwd    - current working directory
-   * @param {function} setCwd - callback to update the cwd in main.js
-   */
+
+  /* ── Command bubble click listeners ───────────────────────────── */
+
+  /*
+    We store the latest cwd and setCwd here so bubble click handlers can
+    use the current values even though the bubbles were created earlier.
+    This is a form of "closure" — the click handlers "close over" these
+    variables and read whatever value they have at click time, not at
+    bubble-creation time.
+  */
+  let _lastCwd    = '~';
+  let _lastSetCwd = null;
+
+  function _attachBubbleListeners() {
+    /*
+      querySelectorAll returns ALL matching elements in the document.
+      We check dataset.wired to avoid adding duplicate event listeners if
+      the user runs `help` multiple times — each run adds new bubbles but
+      we only want one listener per bubble.
+    */
+    document.querySelectorAll('.cmd-bubble').forEach(btn => {
+      if (btn.dataset.wired) return;
+      btn.dataset.wired = '1';
+      btn.addEventListener('click', () => {
+        const cmd = btn.dataset.cmd;
+        if (cmd) execute(cmd, _lastCwd, _lastSetCwd);
+      });
+    });
+  }
+
+
+  /* ── Router ───────────────────────────────────────────────────── */
+
   function execute(rawCmd, cwd, setCwd) {
     const trimmed = rawCmd.trim();
     if (!trimmed) return; /* ignore empty submissions */
 
+    /* Store latest values for bubble click handlers */
+    _lastCwd    = cwd;
+    _lastSetCwd = setCwd;
+
     /*
-      `clear` is handled before the prompt echo because clearing the output
-      and then immediately printing a prompt echo would be pointless.
-      It also doesn't go through the easter-egg or router paths.
+      `clear` is handled before the prompt echo because it wipes all output —
+      printing a prompt echo and then clearing would just leave it empty anyway.
     */
     if (trimmed === 'clear') {
       Output.clear();
       return;
     }
 
-    /* Print "oliver@kali:~/path$ command" above this command's output */
+    /* Always print the prompt echo before the command's output */
     Output.addPromptEcho(trimmed, cwd);
 
-    /* Easter eggs take priority over the normal command map */
-    if (_handleEasterEgg(trimmed)) {
-      Output.scroll();
-      return;
-    }
-
-    /* Split "verb arg1 arg2 ..." into verb + args array */
+    /*
+      split(/\s+/) splits on one or more whitespace characters.
+      This handles "ls  projects/" (double space) correctly, unlike split(' ').
+      The result is ['ls', 'projects/'], so parts[0] is the verb and the
+      rest are arguments.
+    */
     const parts = trimmed.split(/\s+/);
     const verb  = parts[0];
     const args  = parts.slice(1);
+    const ctx   = { args, rawCmd: trimmed, cwd, setCwd };
 
     /*
-      Build the context object passed to every handler.
-      Passing cwd and setCwd through ctx (rather than closing over them)
-      makes each handler independently testable without needing module state.
-    */
-    const ctx = { args, rawCmd: trimmed, cwd, setCwd };
-
-    /*
-      `uname` accepts optional flags (e.g. `-a`) but we always show the
-      same output regardless, so we route any `uname` call to cmdUname.
-      This is simpler than adding uname as a key in COMMANDS and handling
-      the flag there.
+      `uname` can be called as "uname" or "uname -a" — we handle both here
+      by routing any call that starts with "uname" to the same handler,
+      since we always return the same string regardless of flags.
     */
     if (verb === 'uname') {
       cmdUname();
@@ -317,17 +275,15 @@ const Commands = (() => {
       handler(ctx);
     } else {
       /*
-        Replicate the real bash error message format so it feels authentic.
-        Output.esc() prevents a verb like "<script>" from injecting HTML.
+        Mimics the real bash error format. Output.esc() is called on the verb
+        in case it contains HTML characters — e.g. if someone types "<script>".
       */
       Output.addLine('red',     `bash: ${Output.esc(verb)}: command not found`);
-      Output.addLine('default', `Type 'help' to list available commands.`);
+      Output.addLine('default', `Type 'help' to see available commands.`);
     }
 
     Output.scroll();
   }
-
-  /* ── Public API ─────────────────────────────────────────────────── */
 
   return { execute };
 

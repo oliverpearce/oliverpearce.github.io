@@ -1,46 +1,33 @@
 /**
  * js/boot.js
  *
- * Animated startup sequence displayed before the main shell appears.
- * Simulates a Linux system booting — kernel messages, service checks,
- * warnings — then transitions to the interactive shell.
+ * The animated startup sequence that plays before the shell appears.
+ * It looks like a Linux system booting — kernel messages, service checks,
+ * warnings — then transitions to the interactive terminal.
  *
- * How it works:
- *   Boot.run(onComplete) schedules each line to appear at a specific delay
- *   using setTimeout. When the last delay has passed, it populates the ASCII
- *   art banner and calls onComplete(), which is wired in js/main.js to show
- *   the shell section.
+ * The key technique here is staggered setTimeouts. Instead of showing all
+ * the lines at once, each line is scheduled to appear after a specific delay.
+ * This creates the illusion that the system is actually doing work.
  *
- * To customise the boot sequence:
- *   - Edit the LINES array below. Each entry needs { text, cls, delay }.
- *   - cls must be one of: 'default', 'green', 'red', 'blue'
- *     (these map to .boot__line--{cls} rules in animations.css / terminal.css)
- *   - delay is in milliseconds from when Boot.run() is called.
- *   - Increase the delay of the last line to lengthen the sequence.
- *
- * To customise the ASCII art banner:
- *   - Edit the ASCII_ART array. Each element is one row of the art.
- *   - The art is written into the #ascii-art <pre> element in index.html.
- *
- * Public API:
- *   Boot.run(onComplete)
+ * Why setTimeout instead of setInterval?
+ *   setInterval fires a function every N milliseconds on a fixed schedule.
+ *   setTimeout fires once after a specific delay. By giving each line its
+ *   own setTimeout with a different delay, we can control the exact timing
+ *   of each line independently — some lines appear faster, some slower,
+ *   which feels more authentic than perfectly uniform spacing.
  */
 
 const Boot = (() => {
 
-  /* ── Boot line sequence ─────────────────────────────────────────── */
+  /*
+    Each object in LINES describes one line of boot output.
+    'cls' maps to a .boot__line--{cls} CSS class in terminal.css.
+    'delay' is the number of milliseconds after Boot.run() is called
+    before this line appears.
 
-  /**
-   * Each object represents one line of boot output.
-   *
-   * text  — the string to display
-   * cls   — color variant class suffix (maps to .boot__line--{cls})
-   * delay — milliseconds after Boot.run() is called before this line appears
-   *
-   * Staggering the delays creates the impression of real system activity.
-   * The gap between lines doesn't need to be uniform — longer pauses before
-   * "important" messages (like the Kali banner at the end) feel more natural.
-   */
+    To edit the boot sequence, just add, remove, or reorder objects here.
+    No other code needs to change.
+  */
   const LINES = [
     { text: 'BIOS v2.3.4 — Offensive Security Edition',           cls: 'default', delay: 0    },
     { text: 'Initializing hardware...',                            cls: 'default', delay: 130  },
@@ -59,17 +46,14 @@ const Boot = (() => {
     { text: '',                                                     cls: 'default', delay: 1750 },
   ];
 
-  /* ── ASCII banner art ───────────────────────────────────────────── */
+  /*
+    The ASCII art is stored as an array of strings (one per row) then joined
+    with newline characters. This is much easier to read and edit than one long
+    string with \n characters embedded everywhere.
 
-  /**
-   * Two-line block-letter ASCII art: "OLIVER" on the first group of rows,
-   * "PEARCE" on the second. Each element is one horizontal row of the art.
-   * Written as an array and joined with '\n' so the source is readable and
-   * easy to update without counting characters in a single long string.
-   *
-   * The art is written into <pre id="ascii-art"> by the run() function.
-   * Font: "ANSI Shadow" variant rendered with box-drawing characters.
-   */
+    The art uses Unicode box-drawing characters to make solid-looking block letters.
+    Generated with: https://patorjk.com/software/taag/#f=ANSI%20Shadow
+  */
   const ASCII_ART = [
     ' ██████╗ ██╗     ██╗██╗   ██╗███████╗██████╗ ',
     '██╔═══██╗██║     ██║██║   ██║██╔════╝██╔══██╗',
@@ -86,59 +70,48 @@ const Boot = (() => {
     '    ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝',
   ].join('\n');
 
-
-  /* ── Public functions ───────────────────────────────────────────── */
-
-  /**
-   * Start the boot animation and invoke onComplete when it finishes.
-   *
-   * For each line in LINES, we schedule a setTimeout that creates a DOM
-   * element, assigns the correct class, sets its text, and appends it to
-   * the boot section. This approach (many small timeouts vs. one interval)
-   * makes the timing data-driven — changing a delay only requires editing
-   * the LINES array, not any loop logic.
-   *
-   * The onComplete callback is scheduled 150ms after the last line's delay
-   * to give the final line's fade-in animation time to complete before
-   * the transition to the shell.
-   *
-   * @param {function} onComplete - called when the boot sequence ends
-   */
+  /*
+    run() starts the boot animation and calls onComplete() when it's done.
+    The onComplete callback is passed in from main.js — this is why Boot
+    doesn't need to know anything about how the shell works. It just does
+    its animation and says "I'm done" via the callback. This pattern is
+    called "inversion of control".
+  */
   function run(onComplete) {
-    const bootEl       = document.getElementById('boot');
-    const lastDelay    = LINES[LINES.length - 1].delay;
-    const totalDuration = lastDelay + 200; /* extra buffer after the last line appears */
+    const bootEl    = document.getElementById('boot');
+    const lastDelay = LINES[LINES.length - 1].delay;
 
-    /* Schedule each boot line to appear at its specified delay */
+    /*
+      forEach iterates over the LINES array. For each line object, we use
+      object destructuring ({ text, cls, delay }) to unpack the properties
+      into named variables — cleaner than writing line.text, line.cls, etc.
+
+      Each setTimeout schedules a function to run after `delay` milliseconds.
+      The function creates a new <div>, gives it the right CSS classes and text,
+      and appends it to the boot section. Setting scrollTop = scrollHeight
+      keeps the section scrolled to the bottom as new lines are added.
+    */
     LINES.forEach(({ text, cls, delay }) => {
       setTimeout(() => {
-        const line = document.createElement('div');
-
-        /*
-          Classes are split across two attributes:
-            boot__line         — base styles (font-size, line-height, initial opacity: 0)
-            boot__line--{cls}  — color (defined in terminal.css)
-          The fade-in animation (boot-fadein keyframe) is applied to boot__line
-          in animations.css, so every line animates in identically.
-        */
-        line.className  = `boot__line boot__line--${cls}`;
+        const line       = document.createElement('div');
+        line.className   = `boot__line boot__line--${cls}`;
         line.textContent = text;
-
         bootEl.appendChild(line);
-
-        /* Keep the boot section scrolled to the bottom as lines appear */
         bootEl.scrollTop = bootEl.scrollHeight;
       }, delay);
     });
 
-    /* After all lines have appeared, write the banner art and hand off to main */
+    /*
+      We schedule onComplete to run 350ms after the last line's delay.
+      This gives the last line's fade-in animation time to complete before
+      we transition to the shell. Without this buffer, the transition would
+      happen while the last line is still fading in.
+    */
     setTimeout(() => {
       document.getElementById('ascii-art').textContent = ASCII_ART;
       onComplete();
-    }, totalDuration + 150);
+    }, lastDelay + 350);
   }
-
-  /* ── Public API ─────────────────────────────────────────────────── */
 
   return { run };
 

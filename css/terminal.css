@@ -1,29 +1,16 @@
 /*
  * css/terminal.css
  *
- * Layout and component styles for every visible part of the terminal.
- * All color and size values come from CSS custom properties defined in
- * theme.css — nothing is hardcoded here.
+ * All the actual layout and component styling.
+ * This file references variables from theme.css — no hardcoded colours or
+ * sizes anywhere here. If theme.css hasn't loaded first, everything breaks.
  *
- * Organised top-to-bottom in the order elements appear in the DOM:
- *   1. Page / body
- *   2. Scanlines overlay
- *   3. Terminal window
- *   4. Title bar
- *   5. Boot section
- *   6. Shell section
- *   7. ASCII banner
- *   8. Output area + line types
- *   9. Prompt (both the input-row label and the echoed history version)
- *  10. Input row
- *  11. Blinking cursor
- *  12. Clickable links inside output
- *  13. Quick-command bar
- *  14. Responsive overrides
+ * The file is organised top-to-bottom in the same order the elements appear
+ * in the HTML, which makes it easy to find the styles for any element.
  */
 
 
-/* ── 1. Page / Body ──────────────────────────────────────────────────── */
+/* ── 1. Body / Page layout ───────────────────────────────────────────── */
 
 body {
   font-family: var(--font-mono);
@@ -31,8 +18,11 @@ body {
   color:       var(--color-text-primary);
 
   /*
-    Flex + centering keeps the terminal window in the middle of the viewport
-    on large screens. On small screens the padding prevents edge-to-edge contact.
+    display: flex on the body turns it into a flex container.
+    align-items: center + justify-content: center centers its single child
+    (the .terminal div) both vertically and horizontally in the viewport.
+    This is the modern CSS way to center something on a page — much simpler
+    than the old margin: auto tricks.
   */
   display:         flex;
   align-items:     center;
@@ -41,13 +31,16 @@ body {
 }
 
 
-/* ── 2. Scanlines overlay ────────────────────────────────────────────── */
+/* ── 2. CRT Scanlines overlay ────────────────────────────────────────── */
 
 .scanlines {
   /*
-    position: fixed + inset: 0 stretches to fill the entire viewport and
-    stays in place regardless of scroll. z-index: 999 floats it above all
-    other content. pointer-events: none means it's invisible to clicks.
+    position: fixed pins this element to the viewport — it doesn't scroll.
+    inset: 0 is shorthand for top: 0; right: 0; bottom: 0; left: 0, so it
+    covers the entire screen.
+    z-index: 999 puts it above everything else in the stacking order.
+    pointer-events: none makes it completely invisible to mouse clicks and
+    touch events — without this it would block all interaction on the page.
   */
   pointer-events: none;
   position: fixed;
@@ -55,40 +48,45 @@ body {
   z-index: 999;
 
   /*
-    The repeating gradient draws a 1px semi-transparent stripe every 4px,
-    simulating CRT scanlines without any images.
-    Opacity is intentionally low (0.07 equivalent) — just enough to feel
-    retro without straining readability.
+    repeating-linear-gradient creates a pattern that repeats infinitely.
+    This one draws a 1px semi-transparent dark stripe every 4px — that's the
+    scanline effect. The low opacity (0.07) keeps it subtle so it doesn't
+    hurt readability.
   */
   background: repeating-linear-gradient(
     to bottom,
-    transparent                     0px,
-    transparent                     3px,
-    rgba(0, 0, 0, 0.07)             3px,
-    rgba(0, 0, 0, 0.07)             4px
+    transparent             0px,
+    transparent             3px,
+    rgba(0, 0, 0, 0.07)     3px,
+    rgba(0, 0, 0, 0.07)     4px
   );
 }
 
 
-/* ── 3. Terminal window ──────────────────────────────────────────────── */
+/* ── 3. Terminal window ───────────────────────────────────────────────── */
 
 .terminal {
-  width:     100%;
-  max-width: 900px;   /* readable line length on wide monitors */
-
+  width:         100%;
+  max-width:     900px; /* stops the terminal from getting too wide on large monitors */
   background:    var(--color-bg-terminal);
   border-radius: var(--radius-terminal);
   border:        1px solid var(--color-border);
   box-shadow:    var(--shadow-terminal);
 
   /*
-    Flex column: child sections stack vertically and the output area
-    (which has flex: 1) expands to fill available height.
+    display: flex + flex-direction: column makes the terminal's children
+    (title bar, boot section, shell section) stack vertically.
+    The shell section uses flex: 1 to fill remaining space — this only
+    works because the parent is a flex container with a column direction.
   */
   display:        flex;
   flex-direction: column;
 
-  /* overflow: hidden clips child content to the rounded corners */
+  /*
+    overflow: hidden is needed because the terminal has border-radius (rounded corners).
+    Without it, child elements would render outside the rounded corners and look wrong.
+    This "clips" everything to the rounded shape.
+  */
   overflow: hidden;
 }
 
@@ -100,13 +98,16 @@ body {
   border-bottom: 1px solid var(--color-border);
   padding:       12px 18px;
 
+  /*
+    flex-direction defaults to row, so the dots, title, and spacer sit
+    side by side. align-items: center vertically centers them within the bar.
+  */
   display:     flex;
   align-items: center;
   gap:         10px;
 
-  /* Prevent the title or dots from being accidentally selected on double-click */
-  user-select: none;
-  flex-shrink: 0;   /* never compress the title bar when the window is short */
+  user-select: none; /* prevents the title text from being selected on double-click */
+  flex-shrink: 0;    /* tells the flexbox parent not to compress this when space is tight */
 }
 
 .titlebar__dots {
@@ -115,12 +116,11 @@ body {
   align-items: center;
 }
 
-/* The three coloured dot buttons (purely decorative — they don't do anything) */
 .dot {
-  width:       13px;
-  height:      13px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  width:         13px;
+  height:        13px;
+  border-radius: 50%; /* 50% border-radius on a square element makes a perfect circle */
+  flex-shrink:   0;
 }
 .dot--red    { background: var(--color-dot-red); }
 .dot--yellow { background: var(--color-dot-yellow); }
@@ -128,10 +128,10 @@ body {
 
 .titlebar__title {
   /*
-    flex: 1 lets this element grow to fill available space.
-    text-align: center combined with the matching __spacer element (same
-    width as __dots) achieves true optical centering — without the spacer,
-    the title would drift right because the dots push it off-center.
+    flex: 1 makes this element grow to fill all available horizontal space.
+    Combined with text-align: center, the text appears centered in that space.
+    But because the dots are on the left with nothing equal on the right,
+    the "center" would actually be offset — that's what the spacer fixes.
   */
   flex:           1;
   text-align:     center;
@@ -140,8 +140,12 @@ body {
   letter-spacing: 0.5px;
 }
 
+/*
+  The spacer must be the same width as the dot group so that the title's
+  "center" is the true center of the bar. Without it, the title would
+  visually appear shifted to the right.
+*/
 .titlebar__spacer {
-  /* Must match the intrinsic width of .titlebar__dots to keep title centered */
   width: 42px;
 }
 
@@ -150,26 +154,28 @@ body {
 
 .boot {
   padding:    24px var(--padding-h) 18px;
-  min-height: 420px;  /* prevents layout shift as lines are injected */
+  min-height: 420px; /* reserves space so the page doesn't jump as lines appear */
 
   display:        flex;
   flex-direction: column;
-  gap:            3px;   /* tight spacing between boot lines, like a real terminal */
+  gap:            3px; /* small gap between boot lines, like a real terminal */
 
-  flex-shrink: 0;
+  flex-shrink: 0; /* don't shrink this section when the page is short */
 }
 
 /*
-  Boot lines are created by js/boot.js and each gets one of these classes.
-  The animation is defined in animations.css; the color is set here.
-  Keeping color here and animation there means changing timing never
-  accidentally changes color, and vice versa.
+  Each boot line element gets both a base class and a colour modifier class.
+  For example: class="boot__line boot__line--green"
+  The base class handles shared styles (font size, line height, the initial
+  opacity: 0 that the animation starts from).
+  The modifier class only sets the colour.
+  This BEM-inspired pattern (Block__Element--Modifier) keeps styles modular.
 */
-.boot__line             { font-size: var(--font-size-base); line-height: 1.65; }
-.boot__line--default    { color: var(--color-text-muted); }
-.boot__line--green      { color: var(--color-green); }
-.boot__line--red        { color: var(--color-red); }
-.boot__line--blue       { color: var(--color-blue); }
+.boot__line          { font-size: var(--font-size-base); line-height: 1.65; }
+.boot__line--default { color: var(--color-text-muted); }
+.boot__line--green   { color: var(--color-green); }
+.boot__line--red     { color: var(--color-red); }
+.boot__line--blue    { color: var(--color-blue); }
 
 
 /* ── 6. Shell section ────────────────────────────────────────────────── */
@@ -177,13 +183,13 @@ body {
 .shell {
   display:        flex;
   flex-direction: column;
-  flex:           1;   /* grow to fill terminal height below the title bar */
+  flex: 1; /* grows to fill all remaining vertical space in the terminal window */
 }
 
 /*
-  The HTML `hidden` attribute sets display:none by default in all browsers,
-  but some CSS resets override this. This rule ensures `hidden` always works
-  regardless of what the reset does.
+  The HTML `hidden` attribute sets display:none by default, but some aggressive
+  CSS resets override this. This rule ensures `hidden` always works regardless
+  of what the reset file does.
 */
 .shell[hidden] {
   display: none;
@@ -201,64 +207,65 @@ body {
   font-size:   var(--font-size-banner);
   color:       var(--color-green);
   line-height: 1.25;
-
-  /* overflow-x: auto lets the art scroll horizontally on narrow screens
-     instead of being clipped or wrapping mid-character. */
-  overflow-x: auto;
-  white-space: pre;   /* preserve all whitespace and line breaks in the art */
+  /*
+    overflow-x: auto adds a horizontal scrollbar only when needed.
+    This lets the ASCII art scroll left/right on narrow screens instead
+    of being clipped or wrapping (which would break the art completely).
+  */
+  overflow-x:  auto;
+  white-space: pre; /* preserves all spaces and line breaks exactly as written */
 }
 
 .banner__sub {
-  font-size:   var(--font-size-small);
-  color:       var(--color-text-faint);
-  padding:     10px 0 16px;
+  font-size:     var(--font-size-small);
+  color:         var(--color-text-faint);
+  padding:       10px 0 16px;
   border-bottom: 1px solid var(--color-border-subtle);
-  line-height: 1.6;
+  line-height:   1.6;
 }
 
-/* <kbd> tags inside the subtitle hint at interactive commands */
 .banner__sub kbd {
-  color: var(--color-blue);
-  font-style: normal;
+  color: var(--color-blue); /* highlight the command names in the hint text */
 }
 
 
-/* ── 8. Output area + line types ─────────────────────────────────────── */
+/* ── 8. Output area and line colour variants ─────────────────────────── */
 
 .output {
   flex:    1;
   padding: 14px var(--padding-h);
 
   /*
-    max-height + overflow-y: auto gives a fixed-size scrollable region.
-    Without max-height the output would grow forever, pushing the input
-    off the bottom of the window.
+    max-height limits how tall the output area can grow, then overflow-y: auto
+    adds a scrollbar when there's more content than fits. Without max-height,
+    the output would grow forever and push the input field off the bottom.
   */
-  max-height: 440px;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  max-height:      440px;
+  overflow-y:      auto;
+  scroll-behavior: smooth; /* animate scrolling instead of jumping instantly */
 
   display:        flex;
   flex-direction: column;
-  gap:            1px;  /* tiny gap between consecutive lines for readability */
+  gap:            1px; /* tiny gap between output lines for readability */
 }
 
 /*
-  Base line class, shared by all output lines regardless of color.
-  Applied alongside a color modifier: e.g. class="line line--green"
+  Every line in the output gets the base .line class plus a colour modifier.
+  Example: <div class="line line--green">text here</div>
+
+  white-space: pre-wrap preserves intentional spaces (used for indentation
+  inside files) but still wraps long lines instead of overflowing.
+  word-break: break-word breaks long URLs or paths that would overflow.
 */
 .line {
   font-size:   var(--font-size-base);
   line-height: 1.75;
-  white-space: pre-wrap;   /* preserve intentional spaces and wraps in file content */
-  word-break:  break-word; /* prevent very long strings (URLs) from overflowing   */
+  white-space: pre-wrap;
+  word-break:  break-word;
 }
 
-/* A blank line — rendered as empty vertical space rather than an empty div */
-.line--blank   { height: 10px; }
-
-/* Color variants — each maps to a color in theme.css and a class name
-   that matches the first element of every [colorClass, text] tuple in data/ */
+/* Line colour variants — each maps to a color variable from theme.css */
+.line--blank   { height: 10px; } /* an empty spacer line */
 .line--default { color: var(--color-text-muted); }
 .line--green   { color: var(--color-green); }
 .line--blue    { color: var(--color-blue); }
@@ -268,33 +275,35 @@ body {
 .line--white   { color: var(--color-white); }
 
 
-/* ── 9. Prompt styles ────────────────────────────────────────────────── */
+/* ── 9. Prompt colours ───────────────────────────────────────────────── */
 
 /*
-  The input-row prompt and the echoed prompt (shown when a command is run)
-  share the same colored span classes, so the colors are defined once here.
+  The prompt "root@oliver:~#" is built from multiple <span> elements, each
+  with its own colour. These classes are shared between the live input row
+  prompt and the echoed prompt printed above each command's output —
+  defining them once here keeps both in sync automatically.
 */
-.prompt__user   { color: var(--color-red); }    /* oliver */
-.prompt__at     { color: var(--color-text-primary); }  /* @ */
-.prompt__host   { color: var(--color-blue); }   /* kali */
-.prompt__sep    { color: var(--color-text-primary); }  /* : */
-.prompt__path   { color: var(--color-green); }  /* ~/projects */
-.prompt__dollar { color: var(--color-text-primary); margin: 0 6px; } /* $ */
+.prompt__user   { color: var(--color-red); }
+.prompt__at     { color: var(--color-text-primary); }
+.prompt__host   { color: var(--color-blue); }
+.prompt__sep    { color: var(--color-text-primary); }
+.prompt__path   { color: var(--color-green); }
+.prompt__dollar { color: var(--color-text-primary); margin: 0 6px; }
 
 /*
-  Echoed prompt: the full "oliver@kali:~$ command" line printed above each
-  command's output. Created by output.js/addPromptEcho().
+  The prompt echo is the "root@oliver:~# command" line printed above
+  each command's output. It's created by output.js#addPromptEcho().
+  flex-wrap: wrap allows long commands to wrap onto a second line on narrow screens.
 */
 .prompt-echo {
   display:     flex;
-  flex-wrap:   wrap;   /* allows long commands to wrap on narrow screens */
+  flex-wrap:   wrap;
   align-items: center;
   font-size:   var(--font-size-base);
   line-height: 1.75;
-  margin-top:  10px;   /* visual breathing room between consecutive command outputs */
+  margin-top:  10px; /* visual breathing room between consecutive command blocks */
 }
 
-/* The command text portion of the echoed prompt */
 .prompt-echo__cmd { color: var(--color-white); }
 
 
@@ -303,22 +312,21 @@ body {
 .input-row {
   display:     flex;
   align-items: center;
-
   padding:     10px var(--padding-h) 14px;
   border-top:  1px solid var(--color-border-subtle);
-  flex-shrink: 0;  /* always visible, never compressed */
+  flex-shrink: 0;
 }
 
 .input-row__field {
-  flex:      1;    /* fills all remaining width between prompt and cursor */
+  flex:      1;      /* fills all remaining width between the prompt and cursor */
   font-size: var(--font-size-base);
   color:     var(--color-white);
-  outline:   none;
+  outline:   none;   /* removes the default browser focus ring (we don't need it here) */
 
   /*
-    caret-color: transparent hides the browser's native blinking caret.
-    We render our own cursor using the .cursor <span> so we have full
-    control over its size, color, and blink timing.
+    caret-color: transparent hides the browser's built-in blinking text cursor.
+    We replace it with our own custom .cursor element so we have full control
+    over its size, colour, and blink animation.
   */
   caret-color: transparent;
 }
@@ -326,65 +334,69 @@ body {
 
 /* ── 11. Blinking cursor ─────────────────────────────────────────────── */
 
+/*
+  This is a plain green rectangle that blinks using a CSS animation defined
+  in animations.css. It sits right after the text input in the flex row,
+  so it appears at the end of whatever the user has typed.
+*/
 .cursor {
-  display:      inline-block;
-  width:        8px;
-  height:       15px;
-  background:   var(--color-green);
+  display:        inline-block;
+  width:          8px;
+  height:         15px;
+  background:     var(--color-green);
   vertical-align: text-bottom;
-  margin-left:  1px;
-  flex-shrink:  0;
-
-  /* The blink animation is defined in animations.css */
+  margin-left:    1px;
+  flex-shrink:    0;
 }
 
 
-/* ── 12. Clickable links inside output ───────────────────────────────── */
+/* ── 12. Clickable links inside terminal output ──────────────────────── */
 
 /*
-  Applied to <a> elements injected by output.js when a line tuple has a URL.
-  Inherits the parent .line--blue color; the underline signals interactivity.
-  text-underline-offset keeps the underline from touching the descenders.
+  When a line tuple in data/files.js has a URL as its third element,
+  output.js wraps it in an <a> tag with this class.
+  text-underline-offset adds space between the text and underline so
+  the underline doesn't touch the bottom of descending letters like g and y.
 */
 .terminal-link {
-  color:                var(--color-blue);
-  text-decoration:      underline;
+  color:                 var(--color-blue);
+  text-decoration:       underline;
   text-underline-offset: 3px;
-  cursor:               pointer;
+  cursor:                pointer;
 }
 
 .terminal-link:hover {
-  /* Green on hover ties back to the terminal's primary accent color */
-  color: var(--color-green);
+  color: var(--color-green); /* green on hover ties back to the terminal accent */
 }
 
 
-/* ── 13. Quick-command bar ───────────────────────────────────────────── */
+/* ── 13. Quick-bar button strip ──────────────────────────────────────── */
 
 .quickbar {
   background:  var(--color-bg-terminal);
   border-top:  1px solid var(--color-bg-titlebar);
   padding:     10px 18px 14px;
-
-  display:   flex;
-  flex-wrap: wrap;   /* buttons wrap to a new row if they don't all fit */
-  gap:       6px;
-
+  display:     flex;
+  flex-wrap:   wrap; /* buttons wrap to a new row if they don't all fit in one line */
+  gap:         6px;
   flex-shrink: 0;
 }
 
 .quickbar__btn {
-  font-family: var(--font-mono);
-  font-size:   var(--font-size-small);
-  color:       var(--color-blue);
-  background:  var(--color-bg-titlebar);
-  border:      1px solid var(--color-border);
+  font-family:   var(--font-mono);
+  font-size:     var(--font-size-small);
+  color:         var(--color-blue);
+  background:    var(--color-bg-titlebar);
+  border:        1px solid var(--color-border);
   border-radius: var(--radius-btn);
-  padding:     4px 10px;
-
-  /* Short transition so hover doesn't feel instant or sluggish */
-  transition:  background 0.12s, color 0.12s, border-color 0.12s;
-  user-select: none;
+  padding:       4px 10px;
+  /*
+    transition makes the colour change animate smoothly over 0.12s instead
+    of switching instantly. Only the listed properties animate — background,
+    color, and border-color — leaving everything else (like layout) instant.
+  */
+  transition:    background 0.12s, color 0.12s, border-color 0.12s;
+  user-select:   none;
 }
 
 .quickbar__btn:hover {
@@ -394,21 +406,63 @@ body {
 }
 
 
-/* ── 14. Responsive overrides ────────────────────────────────────────── */
+/* ── 14. Command bubbles (shown by the `help` command) ───────────────── */
 
+/*
+  These pill-shaped buttons are injected into the output area by cmdHelp()
+  in commands.js. They're clickable and fire their command when pressed,
+  exactly like the quick-bar buttons above — but they live inside the output.
+
+  border-radius: 999px creates a "pill" shape — any value larger than half
+  the element's height produces fully rounded ends, so 999px is a common
+  trick to get that shape without having to know the exact height.
+*/
+.cmd-bubble {
+  display:        inline-flex;
+  align-items:    center;
+  font-family:    var(--font-mono);
+  font-size:      var(--font-size-small);
+  color:          var(--color-green);
+  /*
+    rgba() lets us set a colour with transparency — the 0.08 alpha here gives
+    a very subtle green tint to the background without being too strong.
+  */
+  background:     rgba(133, 232, 157, 0.08);
+  border:         1px solid rgba(133, 232, 157, 0.25);
+  border-radius:  999px;
+  padding:        3px 10px;
+  margin:         2px 3px;
+  cursor:         pointer;
+  transition:     background 0.12s, border-color 0.12s;
+  user-select:    none;
+  vertical-align: middle;
+}
+
+.cmd-bubble:hover {
+  background:   rgba(133, 232, 157, 0.18);
+  border-color: var(--color-green);
+}
+
+
+/* ── 15. Responsive overrides ────────────────────────────────────────── */
+
+/*
+  @media queries apply styles only when a condition is met — here, only when
+  the screen is 600px wide or narrower (i.e. a phone).
+  Styles inside override the ones above for small screens only.
+*/
 @media (max-width: 600px) {
-  /* On small screens, push the terminal to the top rather than centering it */
   body {
     padding:     12px 8px;
-    align-items: flex-start;
+    align-items: flex-start; /* pin to top of screen instead of vertical-center */
   }
 
-  /* Scale down the ASCII art so it doesn't force horizontal scroll */
+  /* Scale down the ASCII art so it fits without forcing horizontal scroll */
   .banner__art {
     font-size: 7px;
   }
 
-  /* Reduce output height to leave room for the input and quick bar */
+  /* Shorter output area to leave room for the input row and quick bar */
   .output {
     max-height: 300px;
   }
