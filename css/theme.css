@@ -1,0 +1,80 @@
+/*
+ * css/theme.css
+ *
+ * Single source of truth for every design token: colors, fonts, spacing, and
+ * shadows. All other CSS files reference these custom properties exclusively —
+ * no hardcoded hex values or sizes anywhere else.
+ *
+ * To retheme the whole site, only this file needs to change.
+ *
+ * Custom properties are defined on :root so they're accessible from any
+ * selector in any stylesheet without specificity issues.
+ */
+
+:root {
+
+  /* ── Typography ───────────────────────────────────────────────────────
+     JetBrains Mono loaded via Google Fonts (see index.html <head>).
+     The fallback stack covers common monospace fonts on systems where
+     the web font hasn't loaded yet, preventing an invisible flash of text. */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+
+  /* ── Font sizes ───────────────────────────────────────────────────────
+     Kept as named tokens so "make everything slightly larger" is one change. */
+  --font-size-base:   13px;   /* body text, terminal lines, input field        */
+  --font-size-small:  11px;   /* quick-bar buttons, banner subtitle, meta text  */
+  --font-size-banner: 11px;   /* ASCII art (same as small, named for clarity)   */
+
+  /* ── Background colors ────────────────────────────────────────────────
+     Dark palette chosen to match the Kali Linux terminal aesthetic.
+     Each level is slightly lighter than the one before it:
+       page < terminal < titlebar/quickbar < hover state               */
+  --color-bg-page:      #090c10;  /* outermost page background                 */
+  --color-bg-terminal:  #0d1117;  /* terminal window surface                   */
+  --color-bg-titlebar:  #161b22;  /* title bar and quick-bar background        */
+  --color-bg-hover:     #21262d;  /* button/element hover state                */
+
+  /* ── Border colors ────────────────────────────────────────────────────
+     Two levels let us distinguish prominent borders from subtle dividers. */
+  --color-border:        #30363d;  /* main window border, button borders        */
+  --color-border-subtle: #21262d;  /* internal dividers (input row, quick bar)  */
+
+  /* ── Semantic text colors ─────────────────────────────────────────────
+     Named by role rather than appearance so we can adjust the palette
+     without hunting through every file for a specific hex code.           */
+  --color-text-primary:  #e1e4e8;  /* main readable text, command echoes        */
+  --color-text-muted:    #8b949e;  /* secondary / less important text           */
+  --color-text-faint:    #6e7681;  /* meta text, title bar label                */
+
+  /* ── Terminal output palette ──────────────────────────────────────────
+     These map to the .line--{name} classes in terminal.css and to the
+     first element of every [colorClass, text] tuple in data/files.js.
+     Named after their visual color rather than their semantic meaning
+     because they're used decoratively (like syntax highlighting).        */
+  --color-green:   #85e89d;  /* success, directory names, ASCII art glow     */
+  --color-blue:    #79b8ff;  /* links, host in prompt, info text             */
+  --color-purple:  #b392f0;  /* accent (fortune easter egg)                  */
+  --color-gold:    #febc2e;  /* section headers inside files, status labels  */
+  --color-red:     #f97583;  /* errors, warnings, user portion of prompt     */
+  --color-white:   #e1e4e8;  /* primary content text (alias of text-primary) */
+
+  /* ── Title-bar dot colors ─────────────────────────────────────────────
+     Standard macOS traffic-light colours — instantly recognisable.       */
+  --color-dot-red:    #ff5f57;
+  --color-dot-yellow: #febc2e;
+  --color-dot-green:  #28c840;
+
+  /* ── Layout tokens ────────────────────────────────────────────────────
+     Used in terminal.css for consistent rounding and spacing.             */
+  --radius-terminal: 12px;  /* outer window corner radius                   */
+  --radius-btn:       5px;  /* quick-bar button corner radius               */
+
+  --padding-h: 20px;  /* horizontal padding inside the terminal body      */
+
+  /* ── Shadow ──────────────────────────────────────────────────────────
+     The green tint in the first layer ties the glow to the terminal's
+     green accent color; the second layer adds physical depth.             */
+  --shadow-terminal:
+    0 0 60px rgba(0, 255, 100, 0.06),
+    0 24px 80px rgba(0, 0, 0, 0.8);
+}

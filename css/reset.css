@@ -1,0 +1,57 @@
+/*
+ * css/reset.css
+ *
+ * Strips browser-default styles so every element starts from a known
+ * baseline. This prevents unexpected margin/padding differences across
+ * Chrome, Firefox, and Safari without fighting specificity later.
+ *
+ * Rule of thumb: only put here what you'd want reset on EVERY project.
+ * Project-specific base styles belong in terminal.css.
+ */
+
+/* Universal box model: border and padding are included in width/height,
+   which makes layout arithmetic predictable everywhere. */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Prevent iOS from bumping text size when the device rotates. */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Minimum height so the body can be used as a flex container for centering. */
+body {
+  min-height: 100vh;
+}
+
+/*
+  Reset interactive elements so they inherit the page font.
+  Browsers render <button>, <input>, and <select> in the system UI font
+  by default — resetting them here means we only have to set the font once
+  in theme.css rather than on every individual component.
+*/
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  border: none;
+  background: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Reset <pre> so monospace blocks don't get a doubled font-size in some browsers. */
+pre {
+  font: inherit;
+}
+
+/* Reset <kbd> (used in the banner subtitle for command hints). */
+kbd {
+  font: inherit;
+}

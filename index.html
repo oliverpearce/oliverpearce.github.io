@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oliver Pearce — Terminal Portfolio</title>
+
+  <!--
+    Google Fonts: JetBrains Mono
+    Used everywhere for the monospace terminal aesthetic.
+    The two <link rel="preconnect"> tags open TCP connections to Google's font
+    servers early, shaving ~100ms off the font load time.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!--
+    CSS load order matters:
+      1. reset.css     — strips browser default styles so we start from zero
+      2. theme.css     — declares all CSS custom properties (colors, fonts, spacing)
+      3. terminal.css  — layout and component styles (references theme vars)
+      4. animations.css — keyframes and animation rules (references theme vars)
+
+    Keeping them separate makes it easy to swap the theme without touching
+    layout, or update animations without risking layout regressions.
+  -->
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/terminal.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body>
+
+  <!--
+    Scanlines overlay
+    A purely decorative fixed layer on top of everything (z-index: 999).
+    Implemented as a repeating-linear-gradient in CSS — no image needed.
+    aria-hidden removes it from the accessibility tree entirely.
+  -->
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!--
+    Terminal window
+    Clicking anywhere inside this element re-focuses the hidden text input
+    (wired in js/input.js), so users don't have to aim precisely at the field.
+  -->
+  <main class="terminal" id="terminal" role="main">
+
+    <!-- ── Title Bar ─────────────────────────────────────────────────────
+         Mimics macOS window chrome with three coloured dot buttons.
+         The title text (#bar-title) is updated dynamically by js/main.js
+         as the user navigates directories or the boot state changes.
+    -->
+    <div class="titlebar" aria-label="Terminal title bar">
+      <div class="titlebar__dots">
+        <span class="dot dot--red"    aria-hidden="true"></span>
+        <span class="dot dot--yellow" aria-hidden="true"></span>
+        <span class="dot dot--green"  aria-hidden="true"></span>
+      </div>
+      <span class="titlebar__title" id="bar-title">kali — boot — 80×24</span>
+      <!--
+        titlebar__spacer mirrors the pixel width of titlebar__dots so that
+        flexbox centering keeps the title text exactly in the middle.
+      -->
+      <div class="titlebar__spacer" aria-hidden="true"></div>
+    </div>
+
+    <!-- ── Boot Screen ────────────────────────────────────────────────────
+         Starts visible. js/boot.js injects animated lines here via staggered
+         setTimeout calls, then hides this section and reveals #main.
+         aria-live="polite" announces each new line to screen readers without
+         interrupting anything already being spoken.
+    -->
+    <section class="boot" id="boot" aria-label="Boot sequence" aria-live="polite"></section>
+
+    <!-- ── Main Shell ────────────────────────────────────────────────────
+         Starts hidden via the HTML `hidden` attribute (not CSS display:none).
+         Using `hidden` also removes the element from the accessibility tree
+         until js/boot.js removes the attribute after the boot sequence ends.
+    -->
+    <section class="shell" id="main" aria-label="Terminal shell" hidden>
+
+      <!-- ── ASCII Banner ───────────────────────────────────────────────
+           The <pre> content is written by js/boot.js from a plain string
+           array defined there. Keeping it in JS (not hardcoded in HTML)
+           makes it easy to update without touching markup.
+      -->
+      <div class="banner" id="banner" aria-label="Oliver Pearce banner">
+        <pre class="banner__art" id="ascii-art"></pre>
+        <p class="banner__sub">
+          Type <kbd>help</kbd> to list commands
+          &nbsp;·&nbsp;
+          Click a button below
+          &nbsp;·&nbsp;
+          Try <kbd>matrix</kbd> or <kbd>fortune</kbd> for easter eggs 👀
+        </p>
+      </div>
+
+      <!-- ── Output Log ──────────────────────────────────────────────────
+           All terminal output is injected here by js/output.js.
+           role="log" signals to screen readers that this region receives
+           live updates; aria-live="polite" queues announcements politely.
+      -->
+      <div class="output" id="output" role="log" aria-live="polite" aria-label="Terminal output"></div>
+
+      <!-- ── Input Row ───────────────────────────────────────────────────
+           Flex row: [coloured prompt label] [transparent text field] [cursor block].
+           The <input> uses caret-color: transparent so only our custom
+           animated cursor <span> is ever visible — giving full control over
+           the cursor appearance and blink timing.
+           The prompt label is aria-hidden because the input's own aria-label
+           already gives screen readers all the context they need.
+      -->
+      <div class="input-row">
+        <span class="prompt" aria-hidden="true">
+          <span class="prompt__user">oliver</span><span
+          class="prompt__at">@</span><span
+          class="prompt__host">kali</span><span
+          class="prompt__sep">:</span><span
+          class="prompt__path" id="cur-path">~</span><span
+          class="prompt__dollar">$</span>
+        </span>
+        <input
+          class="input-row__field"
+          id="cmd-input"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Terminal command input"
+        />
+        <span class="cursor" aria-hidden="true"></span>
+      </div>
+
+      <!-- ── Quick Command Bar ──────────────────────────────────────────
+           Shortcut buttons so visitors can explore without typing.
+           Each button holds its command string in a data-cmd attribute;
+           js/input.js reads that and passes it straight to the command router,
+           identical to if the user had typed and pressed Enter.
+           Wrapped in <nav> with an aria-label so it's a named landmark region.
+      -->
+      <nav class="quickbar" aria-label="Quick commands">
+        <button class="quickbar__btn" data-cmd="whoami">whoami</button>
+        <button class="quickbar__btn" data-cmd="ls">ls</button>
+        <button class="quickbar__btn" data-cmd="cat resume.txt">cat resume.txt</button>
+        <button class="quickbar__btn" data-cmd="cat skills.txt">cat skills.txt</button>
+        <button class="quickbar__btn" data-cmd="cat contact.txt">cat contact.txt</button>
+        <button class="quickbar__btn" data-cmd="ls projects/">ls projects/</button>
+        <button class="quickbar__btn" data-cmd="cat projects/llm-ctf/README.md">cat llm-ctf readme</button>
+        <button class="quickbar__btn" data-cmd="cat projects/scmac-ios/README.md">cat scmac readme</button>
+        <button class="quickbar__btn" data-cmd="uname -a">uname -a</button>
+        <button class="quickbar__btn" data-cmd="help">help</button>
+        <button class="quickbar__btn" data-cmd="clear">clear</button>
+      </nav>
+
+    </section>
+  </main>
+
+  <!--
+    Script load order
+
+    Data files must load before the JS modules that read them, because the
+    modules reference the globals (FILESYSTEM, FILES, EASTER_EGGS) at call
+    time. Within JS modules, load order follows the dependency graph:
+
+      data/filesystem.js  → declares FILESYSTEM (global object)
+      data/files.js       → declares FILES       (global object)
+      data/easter-eggs.js → declares EASTER_EGGS (global object)
+
+      js/output.js      → no module deps; provides Output global
+      js/filesystem.js  → reads FILESYSTEM + FILES; provides Filesystem global
+      js/commands.js    → reads Output, Filesystem, EASTER_EGGS; provides Commands global
+      js/boot.js        → standalone animation; provides Boot global
+      js/input.js       → standalone input handler; provides Input global
+      js/main.js        → entry point; depends on all of the above
+  -->
+  <script src="data/filesystem.js"></script>
+  <script src="data/files.js"></script>
+  <script src="data/easter-eggs.js"></script>
+
+  <script src="js/output.js"></script>
+  <script src="js/filesystem.js"></script>
+  <script src="js/commands.js"></script>
+  <script src="js/boot.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/main.js"></script>
+
+</body>
+</html>
