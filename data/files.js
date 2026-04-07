@@ -98,10 +98,11 @@ const FILES = {
 
     ['gold',    'OFFENSIVE SECURITY'],
     /* The progress bars are just regular text using # and - characters */
-    ['white',   '  [##########] CTF Challenges (RE + Exploitation)  100%'],
-    ['white',   '  [#########-] LLM-Assisted Offensive Research      90%'],
-    ['white',   '  [########--] Reverse Engineering                   80%'],
-    ['white',   '  [#######---] Exploitation Development              70%'],
+    ['white',   '  [##########] Capture-the-Flags                    100%'],
+    ['white',   '  [#########-] Computer Networks                     90%'],
+    ['white',   '  [#########-] Offensive Research                    90%'],
+    ['white',   '  [##??####??] Graduate Education                    ??%'],
+  
     ['blank',   ''],
 
     ['gold',    'ENGINEERING'],
@@ -118,7 +119,7 @@ const FILES = {
 
     ['gold',    'RESEARCH'],
     ['default', '  U-Net VAE Architecture  ·  Multi-Agentic LLM Frameworks'],
-    ['default', '  Benchmark Design  ·  CTF Challenge Authoring'],
+    ['default', '  Model Architecting  ·  ML/AI Tooling'],
   ],
 
 
