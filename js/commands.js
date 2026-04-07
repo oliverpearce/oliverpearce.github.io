@@ -86,17 +86,17 @@ const Commands = (() => {
 
   function cmdWhoami() {
     Output.addLines([
-      ['green',   'Oliver Pearce — Software Engineer & Security Researcher'],
-      ['default', 'Location:  Santa Cruz, CA'],
+      ['green',   'Oliver Pearce — Data Curation Engineer @ Apple'],
+      ['default', 'Location:  San Francisco, Bay Area'],
       ['default', 'Degree:    B.S. Computer Science — UC Santa Cruz'],
-      ['blue',    'Focus:     Offensive Security · iOS Dev · AI/ML Research'],
-      ['gold',    'Status:    Open to opportunities 🟢'],
+      ['blue',    'Focus:     Networks · AI/ML · Cybersecurity'],
+      ['gold',    'Status:    Under a pile of NDAs 🤫🤫'],
     ]);
   }
 
   function cmdUname() {
     /* Returns a realistic Linux system info string matching Kali Linux format */
-    Output.addLine('default', 'Linux kali 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC Kali 6.6.9-1kali1 x86_64 GNU/Linux');
+    Output.addLine('default', 'Linux SLVRD 6.6.9-amd64 #1 SMP PREEMPT_DYNAMIC SLVRD 6.6.9-1slvrd1 x86_64 GNU/Linux');
   }
 
   function cmdDate() {
@@ -146,9 +146,9 @@ const Commands = (() => {
       */
       setCwd(target);
     } else if (Filesystem.isFile(target)) {
-      Output.addLine('red', `bash: cd: ${arg}: Not a directory`);
+      Output.addLine('red', `SLVRD: cd: ${arg}: Not a directory`);
     } else {
-      Output.addLine('red', `bash: cd: ${arg}: No such file or directory`);
+      Output.addLine('red', `SLVRD: cd: ${arg}: No such file or directory`);
     }
   }
 
@@ -275,10 +275,10 @@ const Commands = (() => {
       handler(ctx);
     } else {
       /*
-        Mimics the real bash error format. Output.esc() is called on the verb
+        Mimics the real SLVRD error format. Output.esc() is called on the verb
         in case it contains HTML characters — e.g. if someone types "<script>".
       */
-      Output.addLine('red',     `bash: ${Output.esc(verb)}: command not found`);
+      Output.addLine('red',     `SLVRD: ${Output.esc(verb)}: command not found`);
       Output.addLine('default', `Type 'help' to see available commands.`);
     }
 

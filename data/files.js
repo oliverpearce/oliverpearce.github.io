@@ -40,17 +40,23 @@ const FILES = {
 
   '~/resume.txt': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║            OLIVER PEARCE  —  RESUME                 ║'],
+    ['green',   '║            OLIVER PEARCE  —  RESUME                  ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
     ['gold',    'EDUCATION'],
     ['white',   '  B.S. Computer Science'],
     ['default', '  University of California, Santa Cruz'],
-    ['blue',    '  (8×) Dean\'s Honor List'],
+    ['blue',    '  3.93 / 4.00 + (9×) Dean\'s Honor List'],
     ['blank',   ''],
 
     ['gold',    'EXPERIENCE'],
+
+    ['white',   '  Data Curation Engineer — Apple'],
+    ['default', '    → [REDACTED]'],
+    ['default', '    → ...Ryz3n 50lut10n5 @ 4ppl3...'],
+    ['default', '    → [REDACTED]'],
+    ['blank',   ''],
 
     ['white',   '  Undergraduate Researcher — UCSC (Offensive Security / LLMs)'],
     ['default', '    → Evaluated autonomous CTF-solving of multi-agentic LLM frameworks'],
@@ -75,7 +81,7 @@ const FILES = {
 
     ['gold',    'LINKS'],
     /* The third element is the full URL — output.js uses this to make the line clickable */
-    ['link', '  Resume PDF  →  drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
+    ['link', '  Resume PDF  →  drive.google.com/file/...', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
     ['link', '  LinkedIn   →  linkedin.com/in/oliverjpearce',                               'https://linkedin.com/in/oliverjpearce'],
     ['link', '  GitHub     →  github.com/oliverpearce',                                     'https://github.com/oliverpearce'],
     ['link', '  Website    →  oliverjpearce.com',                                           'https://oliverjpearce.com'],
@@ -86,7 +92,7 @@ const FILES = {
 
   '~/skills.txt': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║                   SKILL TREE                        ║'],
+    ['green',   '║                   SKILL TREE                         ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
@@ -100,19 +106,18 @@ const FILES = {
 
     ['gold',    'ENGINEERING'],
     ['white',   '  [##########] Python                               100%'],
-    ['white',   '  [#########-] Swift / iOS Development               90%'],
-    ['white',   '  [########--] JavaScript / TypeScript               80%'],
-    ['white',   '  [########--] Machine Learning (PyTorch / VAE)      80%'],
-    ['white',   '  [#######---] Supabase / Backend                    70%'],
+    ['white',   '  [##########] Apple Software / Hardware            100%'],
+    ['white',   '  [##########] Git / GitHub                         100%'],
+    ['white',   '  [#########-] C / C# / C++                          90%'],
     ['blank',   ''],
 
     ['gold',    'TOOLS & PLATFORMS'],
-    ['default', '  Kali Linux  ·  GDB  ·  Ghidra  ·  pwntools'],
-    ['default', '  Xcode  ·  Git  ·  Vercel  ·  PokeAPI  ·  Discord API'],
+    ['default', '  Linux/Unix  ·  GDB  ·  Ghidra  ·  pwntools'],
+    ['default', '  Xcode  ·  Git  ·  Vercel  ·  VSCode  ·  Network'],
     ['blank',   ''],
 
     ['gold',    'RESEARCH'],
-    ['default', '  U-Net  ·  VAE Architecture  ·  Multi-Agentic LLM Frameworks'],
+    ['default', '  U-Net VAE Architecture  ·  Multi-Agentic LLM Frameworks'],
     ['default', '  Benchmark Design  ·  CTF Challenge Authoring'],
   ],
 
@@ -121,12 +126,12 @@ const FILES = {
 
   '~/contact.txt': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║                  CONTACT OLIVER                     ║'],
+    ['green',   '║                  CONTACT OLIVER                      ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
     ['white',   '  Name      Oliver Pearce'],
-    ['white',   '  Location  Santa Cruz, CA'],
+    ['white',   '  Location  San Francisco, Bay Area'],
     ['blank',   ''],
 
     /* Using 'link' colorClass with explicit url for mailto and https links */
@@ -140,7 +145,7 @@ const FILES = {
     ['link',    '            oliverjpearce.com',             'https://oliverjpearce.com'],
     ['blank',   ''],
 
-    ['default', '  Open to: internships, research collabs, CTF teams'],
+    ['default', '  Open to: everything! say hi 👋👋'],
   ],
 
 
@@ -148,7 +153,7 @@ const FILES = {
 
   '~/projects/llm-ctf/README.md': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║     Project: LLM Offensive Security Research        ║'],
+    ['green',   '║     Project: LLM Offensive Security Research         ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
@@ -174,7 +179,7 @@ const FILES = {
 
   '~/projects/scmac-ios/README.md': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║     Project: SCMAC iOS App (UCSC BluePrint)         ║'],
+    ['green',   '║     Project: SCMAC iOS App (UCSC BluePrint)          ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
@@ -201,7 +206,7 @@ const FILES = {
 
   '~/projects/study-buddy/README.md': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║     Project: Study Buddy (Hackathon)                ║'],
+    ['green',   '║     Project: Study Buddy (Hackathon)                 ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
@@ -224,7 +229,7 @@ const FILES = {
 
   '~/projects/acm-ai-lab/README.md': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║     Project: ACM AI Lab — Map Enhancement           ║'],
+    ['green',   '║     Project: ACM AI Lab — Map Enhancement            ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 
@@ -248,7 +253,7 @@ const FILES = {
 
   '~/projects/silvered-bot/README.md': [
     ['green',   '╔══════════════════════════════════════════════════════╗'],
-    ['green',   '║     Project: silvered-bot (Discord)                 ║'],
+    ['green',   '║     Project: silvered-bot (Discord)                  ║'],
     ['green',   '╚══════════════════════════════════════════════════════╝'],
     ['blank',   ''],
 

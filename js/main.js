@@ -44,7 +44,7 @@
     /* Update the path shown in the input row prompt */
     document.getElementById('cur-path').textContent  = cwd;
     /* Update the terminal window title bar */
-    document.getElementById('bar-title').textContent = `root@oliver: ${cwd} — bash`;
+    document.getElementById('bar-title').textContent = `root@oliver: ${cwd} — SLVRD`;
   }
 
   /*
@@ -79,7 +79,7 @@
     document.getElementById('main').removeAttribute('hidden');
 
     /* Update the title bar text for the interactive shell state */
-    document.getElementById('bar-title').textContent = 'root@oliver: ~ — bash';
+    document.getElementById('bar-title').textContent = 'root@oliver: ~ — SLVRD';
 
     Output.init();
     Input.init(handleCommand);

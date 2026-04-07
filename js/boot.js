@@ -29,7 +29,7 @@ const Boot = (() => {
     No other code needs to change.
   */
   const LINES = [
-    { text: 'BIOS v2.3.4 — Offensive Security Edition',           cls: 'default', delay: 0    },
+    { text: 'BIOS v2.3.4 — Oliver Pearce Security System (OPSS)',           cls: 'default', delay: 0    },
     { text: 'Initializing hardware...',                            cls: 'default', delay: 130  },
     { text: '[  OK  ] Memory check passed (16384 MB)',             cls: 'green',   delay: 260  },
     { text: '[  OK  ] CPU: Intel Core i9-13900K × 24',            cls: 'green',   delay: 400  },
@@ -42,7 +42,7 @@ const Boot = (() => {
     { text: '[  OK  ] Metasploit framework loaded',                cls: 'green',   delay: 1360 },
     { text: '[  OK  ] Portfolio modules initialized',              cls: 'green',   delay: 1490 },
     { text: '',                                                     cls: 'default', delay: 1600 },
-    { text: 'Kali GNU/Linux 2024.4  ─  oliverjpearce.com',        cls: 'blue',    delay: 1670 },
+    { text: 'SLVRD GNU/Linux 202X.10.08  ─  oliverjpearce.com',        cls: 'blue',    delay: 1670 },
     { text: '',                                                     cls: 'default', delay: 1750 },
   ];
 

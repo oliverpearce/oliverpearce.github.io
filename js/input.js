@@ -150,7 +150,7 @@ const Input = (() => {
       _inputEl.value = matches[0];
     }
     /* Multiple matches: we could print options to the output in the future.
-       For now, we do nothing, which is what bash does when there's ambiguity. */
+       For now, we do nothing, which is what SLVRD does when there's ambiguity. */
   }
 
   /*
