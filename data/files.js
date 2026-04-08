@@ -45,17 +45,20 @@ const FILES = {
     ['blank',   ''],
 
     ['gold',    'EDUCATION'],
-    ['white',   '  B.S. Computer Science'],
+    ['white',   '  B.S. Computer Science  ·  Magna Cum Laude'],
     ['default', '  University of California, Santa Cruz'],
-    ['blue',    '  3.93 / 4.00 + (9×) Dean\'s Honor List'],
+    ['blue',    '  3.93 / 4.00  ·  (9×) Dean\'s Honor List'],
     ['blank',   ''],
 
     ['gold',    'EXPERIENCE'],
 
-    ['white',   '  Data Curation Engineer — Apple'],
-    ['default', '    → [REDACTED]'],
-    ['default', '    → ...Ryz3n 50lut10n5 @ 4ppl3...'],
-    ['default', '    → [REDACTED]'],
+    ['white',   '  Contract  ·  Data Curation Engineer — Apple'],
+    ['default', '    → Ryzen Solutions @ Apple'],
+    ['blank',   ''],
+
+    ['white',   '  Contract  ·  Cybersecurity Expert Handshake MOVE Fellowship'],
+    ['default', '    → Developed prompts to assess the performance of LLMs '],
+    ['default', '    → Worked with a foundational LLM company'],
     ['blank',   ''],
 
     ['white',   '  Undergraduate Researcher — UCSC (Offensive Security / LLMs)'],
@@ -81,7 +84,7 @@ const FILES = {
 
     ['gold',    'LINKS'],
     /* The third element is the full URL — output.js uses this to make the line clickable */
-    ['link', '  Resume PDF  →  drive.google.com/file/...', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
+    ['link', '  Resume     →  drive.google.com/file/...', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
     ['link', '  LinkedIn   →  linkedin.com/in/oliverjpearce',                               'https://linkedin.com/in/oliverjpearce'],
     ['link', '  GitHub     →  github.com/oliverpearce',                                     'https://github.com/oliverpearce'],
     ['link', '  Website    →  oliverjpearce.com',                                           'https://oliverjpearce.com'],

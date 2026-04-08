@@ -51,6 +51,7 @@ const Commands = (() => {
       ['cat projects/study-buddy/README.md',  'cat projects/study-buddy/README.md'],
       ['cat projects/acm-ai-lab/README.md',   'cat projects/acm-ai-lab/README.md'],
       ['cat projects/silvered-bot/README.md', 'cat projects/silvered-bot/README.md'],
+      ['pwd',                                 'pwd'],
       ['uname -a',                            'uname -a'],
       ['date',                                'date'],
       ['clear',                               'clear'],
@@ -90,7 +91,7 @@ const Commands = (() => {
       ['default', 'Location:  San Francisco, Bay Area'],
       ['default', 'Degree:    B.S. Computer Science — UC Santa Cruz'],
       ['blue',    'Focus:     Networks · AI/ML · Cybersecurity'],
-      ['gold',    'Status:    Under a pile of NDAs 🤫🤫'],
+      ['gold',    'Status:    Under a pile of NDAs'],
     ]);
   }
 
@@ -102,6 +103,23 @@ const Commands = (() => {
   function cmdDate() {
     /* new Date().toString() gives the current time in the user's local timezone */
     Output.addLine('white', new Date().toString());
+  }
+
+  /*
+    pwd (print working directory) — prints the absolute path of the current
+    directory. In a real shell, cwd is stored in the shell's process state.
+    Here we receive it through the ctx object passed by Commands.execute().
+
+    The path displayed is prefixed with /home/root/ to simulate a real Linux
+    home directory — in the virtual filesystem we use ~ as shorthand, but
+    a real terminal would show the full expanded path.
+  */
+  function cmdPwd({ cwd }) {
+    /* Expand ~ to /home/root so it looks like a real filesystem path */
+    const expanded = cwd === '~'
+      ? '/home/root'
+      : cwd.replace('~', '/home/root');
+    Output.addLine('white', expanded);
   }
 
   function cmdLs({ args, cwd }) {
@@ -150,6 +168,69 @@ const Commands = (() => {
     } else {
       Output.addLine('red', `SLVRD: cd: ${arg}: No such file or directory`);
     }
+  }
+
+  /*
+    cmdSudo handles any `sudo` command. Most sudo attempts get a dismissal,
+    but `sudo rm -rf /` (and its --no-preserve-root variant) prints a hidden
+    CTF-style flag as a reward for the curious visitor who tries it.
+
+    The flag is formatted like a real CTF flag: SLVRD{...}
+    It's styled to look like terminal output so it blends in just enough
+    to be a genuine "aha!" moment for someone who knows what they're looking for.
+  */
+  function cmdSudo({ args, rawCmd }) {
+    /*
+      We check the full rawCmd string (not just args) because the flag should
+      only appear for the exact dangerous commands, not just any sudo invocation.
+      .trim() removes leading/trailing whitespace before comparing.
+    */
+    const fullArgs = args.join(' ').trim();
+    const isRmRf   = fullArgs === 'rm -rf /' || fullArgs === 'rm -rf / --no-preserve-root';
+
+    if (isRmRf) {
+      /*
+        Print a realistic-looking permission denied message first,
+        then reveal the flag after a short pause. The setTimeout creates
+        a dramatic beat between the error and the reward.
+      */
+      Output.addLines([
+        ['red',     'rm: it is dangerous to operate recursively on \'/\''],
+        ['red',     'rm: use --no-preserve-root to override this failsafe'],
+        ['blank',   ''],
+        ['gold', 'please don\'t look any further'],
+        ['blank',   ''],
+      ]);
+
+      /*
+        setTimeout delays the flag reveal by 800ms so it appears to "load"
+        after the error — making it feel like something actually happened
+        rather than just printing everything at once.
+      */
+      setTimeout(() => {
+        Output.addLines([
+          ['green',   '>>> SLVRD SECURITY SUBSYSTEM <<<'],
+          ['default', 'please dont delete my system,'],
+          ['blank',   ''],
+          ['gold',    '  ┌─────────────────────────────────────────┐'],
+          ['gold',    '  │                                         │'],
+          ['gold',    '  │       SLVRD{N0t-t0d4y-th4nk-y0u!}       │'],
+          ['gold',    '  │                                         │'],
+          ['gold',    '  └─────────────────────────────────────────┘'],
+          ['blank',   ''],
+          ['default', 'keep poking around though c:'],
+        ]);
+        Output.scroll();
+      }, 800);
+
+      return;
+    }
+
+    /* Any other sudo command gets a generic denial */
+    Output.addLines([
+      ['red',     `sudo: ${Output.esc(args[0] || 'command')}: permission denied`],
+      ['default', 'yo chill thats a me thing -oli'],
+    ]);
   }
 
   function cmdCat({ args, cwd }) {
