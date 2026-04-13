@@ -270,6 +270,8 @@ const Commands = (() => {
     whoami: cmdWhoami,
     uname:  cmdUname,
     date:   cmdDate,
+    pwd:    cmdPwd,
+    sudo:   cmdSudo,
     ls:     cmdLs,
     cd:     cmdCd,
     cat:    cmdCat,
