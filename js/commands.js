@@ -194,7 +194,17 @@ const Commands = (() => {
       .trim() removes leading/trailing whitespace before comparing.
     */
     const fullArgs = args.join(' ').trim();
-    const isRmRf   = fullArgs === 'rm -rf /' || fullArgs === 'rm -rf / --no-preserve-root';
+    const isRmRf   = fullArgs === 'rm -rf /' || fullArgs === 'rm -rf / --no-preserve-root' || fullArgs === 'rm -r -f /';
+    const isRm     = fullArgs === 'rm' || fullArgs === 'rm -rf' || fullArgs === 'rm -r -f';
+
+    if (isRm) {
+      /* Just `sudo rm` — playful warning */
+      Output.addLines([
+        ['red',     `sudo: ${Output.esc(args[0] || 'command')}: permission denied`],
+        ['default', 'wait fr chill please dont hahahahaha'],
+      ]);
+      return;
+    }
 
     if (isRmRf) {
       /*
@@ -206,7 +216,7 @@ const Commands = (() => {
         ['red',     'rm: it is dangerous to operate recursively on \'/\''],
         ['red',     'rm: use --no-preserve-root to override this failsafe'],
         ['blank',   ''],
-        ['gold', 'please don\'t look any further'],
+        ['gold', 'let this be a lesson learned; DONT DELETE YOUR COMPUTER!!!'],
         ['blank',   ''],
       ]);
 
@@ -218,7 +228,7 @@ const Commands = (() => {
       setTimeout(() => {
         Output.addLines([
           ['green',   '>>> SLVRD SECURITY SUBSYSTEM <<<'],
-          ['default', 'please dont delete my system,'],
+          ['default', 'thanks for trying to delete my system,'],
           ['blank',   ''],
           ['gold',    '  ┌─────────────────────────────────────────┐'],
           ['gold',    '  │                                         │'],
