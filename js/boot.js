@@ -34,7 +34,7 @@ const Boot = (() => {
     { text: '[  OK  ] Memory check passed (16384 MB)',             cls: 'green',   delay: 260  },
     { text: '[  OK  ] CPU: Intel Core i9-13900K × 24',            cls: 'green',   delay: 400  },
     { text: '[  OK  ] Network interface eth0 detected',            cls: 'green',   delay: 530  },
-    { text: 'Loading Kali Linux 2024.4...',                        cls: 'default', delay: 680  },
+    { text: 'Loading SLVRD Linux 2026.4...',                        cls: 'default', delay: 680  },
     { text: '[  OK  ] Mounting filesystem /dev/sda1',              cls: 'green',   delay: 810  },
     { text: '[  OK  ] Loading kernel modules',                     cls: 'green',   delay: 940  },
     { text: '[  OK  ] Starting systemd services',                  cls: 'green',   delay: 1060 },

@@ -271,4 +271,27 @@ const FILES = {
     ['link',    '            github.com/oliverpearce/silvered-bot', 'https://github.com/oliverpearce/silvered-bot'],
   ],
 
+
+  /* ── ~/.url shortcut files ───────────────────────────────────────── */
+
+  '~/projects/scmac-ios/AppStore.url': [
+    ['link',    'Apple App Store — Santa Cruz Mountains Art Center',
+                'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
+  ],
+
+  '~/projects/study-buddy/devpost.url': [
+    ['link',    'Study Buddy — Devpost Submission',
+                'https://devpost.com/software/studysync-gbo8fx'],
+  ],
+
+  '~/projects/acm-ai-lab/research-manuscript.url': [
+    ['link',    'ACM AI Lab Research Manuscript',
+                'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
+  ],
+
+  '~/projects/silvered-bot/source.url': [
+    ['link',    'silvered-bot GitHub Repository',
+                'https://github.com/oliverpearce/silvered-bot'],
+  ],
+
 };

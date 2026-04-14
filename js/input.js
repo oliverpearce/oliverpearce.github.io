@@ -77,6 +77,22 @@ const Input = (() => {
     'cat projects/acm-ai-lab/research-manuscript.url',
     'cat projects/silvered-bot/README.md',
     'cat projects/silvered-bot/source.url',
+    'file',
+    'file resume.txt',
+    'file skills.txt',
+    'file contact.txt',
+    'file projects/llm-ctf/README.md',
+    'file projects/scmac-ios/AppStore.url',
+    'file projects/study-buddy/devpost.url',
+    'file projects/acm-ai-lab/research-manuscript.url',
+    'file projects/silvered-bot/source.url',
+    'find -name',
+    'find -name "resume.txt"',
+    'find -name "skills.txt"',
+    'find -name "contact.txt"',
+    'find -name "README.md"',
+    'find -name "AppStore.url"',
+    'find -name "devpost.url"',
     'echo',
     'echo hello',
     'echo hello world',
@@ -228,6 +244,28 @@ const Input = (() => {
       const cwd = _getCwd();
       const partialPath = parts.slice(1).join(' ');
       matches = _generatePathSuggestions(cmd, partialPath, cwd);
+    } else if (cmd === 'file' && _getCwd) {
+      /*
+        User is typing a file argument for the file command.
+        Generate suggestions from the filesystem.
+      */
+      const cwd = _getCwd();
+      const partialPath = parts.slice(1).join(' ');
+      matches = _generatePathSuggestions(cmd, partialPath, cwd);
+    } else if (cmd === 'find') {
+      /*
+        For find command: handle "find -name" patterns
+      */
+      if (parts.length === 2 && parts[1].startsWith('-')) {
+        /* User is typing the flag, complete to "-name" */
+        matches = AUTOCOMPLETE_COMMANDS.filter(
+          c => c.startsWith(val) && c !== val && c.startsWith('find')
+        );
+      } else if (parts.length >= 3 && parts[1] === '-name') {
+        /* User is typing the filename argument for -name */
+        const searchTerm = parts.slice(2).join(' ');
+        matches = _generateFileSuggestions(searchTerm);
+      }
     }
 
     if (matches.length === 1) {
@@ -299,6 +337,42 @@ const Input = (() => {
         return fullPath;
       });
     
+    return matches;
+  }
+
+  /*
+    _generateFileSuggestions() generates autocomplete matches for the find -name command.
+    It collects all files from the entire filesystem and returns matching filenames.
+    
+    Example: typing "find -name README" generates ["find -name \"README.md\""]
+  */
+  function _generateFileSuggestions(partialFileName) {
+    const matches = [];
+    const seen = new Set(); /* Avoid duplicates */
+
+    /* Helper to recursively collect all files */
+    function collectFiles(dirPath) {
+      const entries = Filesystem.listDir(dirPath);
+      if (!entries) return;
+
+      entries.forEach(entry => {
+        if (entry.endsWith('/')) {
+          /* Directory — recurse into it */
+          const dirName = entry.slice(0, -1);
+          const fullDirPath = dirPath === '~' ? `~/${dirName}` : `${dirPath}/${dirName}`;
+          collectFiles(fullDirPath);
+        } else {
+          /* File — check if it matches the partial search term */
+          if (entry.startsWith(partialFileName) && !seen.has(entry)) {
+            seen.add(entry);
+            /* Return with quotes around the filename and the "find -name" prefix */
+            matches.push(`find -name "${entry}"`);
+          }
+        }
+      });
+    }
+
+    collectFiles('~');
     return matches;
   }
 

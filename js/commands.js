@@ -52,8 +52,13 @@ const Commands = (() => {
       ['cat projects/study-buddy/README.md',  'cat projects/study-buddy/README.md'],
       ['cat projects/acm-ai-lab/README.md',   'cat projects/acm-ai-lab/README.md'],
       ['cat projects/silvered-bot/README.md', 'cat projects/silvered-bot/README.md'],
+      ['cat projects/scmac-ios/AppStore.url', 'cat projects/scmac-ios/AppStore.url'],
       ['echo hello world',                    'echo hello world'],
       ['cowsay Oliver is cool',               'cowsay Oliver is cool'],
+      ['file resume.txt',                     'file resume.txt'],
+      ['file projects/scmac-ios/AppStore.url','file projects/scmac-ios/AppStore.url'],
+      ['find -name "README"',                 'find -name "README"'],
+      ['find -name "devpost.url"',            'find -name "devpost.url"'],
       ['pwd',                                 'pwd'],
       ['uname -a',                            'uname -a'],
       ['date',                                'date'],
@@ -286,6 +291,97 @@ const Commands = (() => {
     lines.forEach(line => Output.addLine('default', line));
   }
 
+  function cmdFile({ args, cwd }) {
+    if (!args || args.length === 0) {
+      Output.addLine('red', 'file: missing file argument');
+      return;
+    }
+
+    const arg = args.join(' ');
+    const filePath = Filesystem.resolve(arg, cwd);
+
+    if (Filesystem.isFile(filePath)) {
+      const content = Filesystem.readFile(filePath);
+      const fileName = filePath.split('/').pop();
+      
+      /* Determine file type based on extension */
+      let fileType = 'text';
+      if (fileName.endsWith('.txt')) fileType = 'ASCII text';
+      else if (fileName.endsWith('.md')) fileType = 'Markdown document';
+      else if (fileName.endsWith('.json')) fileType = 'JSON data';
+      else if (fileName.endsWith('.py')) fileType = 'Python script';
+      else if (fileName.endsWith('.js')) fileType = 'JavaScript source';
+      else if (fileName.endsWith('.url')) fileType = 'text file (URL shortcut)';
+
+      /* Calculate file size based on content */
+      let size = 0;
+      if (content) {
+        size = content.reduce((acc, line) => {
+          /* Estimate bytes: color code + text + newline */
+          return acc + (line[1] ? line[1].length : 0) + 1;
+        }, 0);
+      }
+
+      Output.addLine('default', `${fileName}: ${fileType} (${size} bytes)`);
+    } else if (Filesystem.isDir(filePath)) {
+      Output.addLine('red', `file: ${arg}: Is a directory`);
+    } else {
+      Output.addLine('red', `file: ${arg}: No such file or directory`);
+    }
+  }
+
+  function cmdFind({ args }) {
+    if (!args || args.length === 0) {
+      Output.addLine('default', 'Usage: find -name "file_name"');
+      return;
+    }
+
+    if (args[0] !== '-name' || !args[1]) {
+      Output.addLine('default', 'Usage: find -name "file_name"');
+      return;
+    }
+
+    /* Get the search term — if it's a single argument, use it; otherwise join multiple words */
+    const searchTerm = args.slice(1).join(' ').toLowerCase();
+    const results = [];
+
+    /* Helper to recursively collect all files from the filesystem */
+    function getAllFiles(dirPath, prefix = '') {
+      const entries = Filesystem.listDir(dirPath);
+      if (!entries) return;
+
+      entries.forEach(entry => {
+        if (entry.endsWith('/')) {
+          /* Directory — recurse into it */
+          const dirName = entry.slice(0, -1);
+          const fullDirPath = dirPath === '~' ? `~/${dirName}` : `${dirPath}/${dirName}`;
+          getAllFiles(fullDirPath, prefix + dirName + '/');
+        } else {
+          /* File — check if it matches the search term */
+          if (entry.toLowerCase().includes(searchTerm)) {
+            const fullPath = dirPath === '~' ? `~/${entry}` : `${dirPath}/${entry}`;
+            results.push(fullPath);
+          }
+        }
+      });
+    }
+
+    getAllFiles('~');
+
+    if (results.length === 0) {
+      Output.addLine('default', `find: no files named '${args[1]}' found`);
+    } else {
+      results.forEach(path => {
+        Output.addLine('blue', path);
+      });
+    }
+  }
+
+  function cmdClear() {
+    /* Clear all output from the terminal */
+    Output.clear();
+  }
+
 
   /* ── Command map ──────────────────────────────────────────────── */
 
@@ -306,6 +402,9 @@ const Commands = (() => {
     cat:    cmdCat,
     echo:   cmdEcho,
     cowsay: cmdCowsay,
+    file:   cmdFile,
+    find:   cmdFind,
+    clear:  cmdClear,
   };
 
 
