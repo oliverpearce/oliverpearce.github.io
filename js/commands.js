@@ -395,6 +395,9 @@ const Commands = (() => {
   function cmdClear() {
     /* Clear all output from the terminal */
     Output.clear();
+    Output.addHTML('Hello world! I have opened my personal console for you to navigate and poke around, so please feel free to explore! If you would prefer a more traditional portfolio, <a href="https://oliverjpearce.com/" target="_blank" rel="noopener noreferrer" class="terminal-link">please visit this website</a>.');
+    Output.addHTML('For the CTF, the flag is in the format SLVRD{...} - good luck! c:');
+    Output.addLine('blank', '');
   }
 
 
@@ -468,10 +471,10 @@ const Commands = (() => {
       `clear` is handled before the prompt echo because it wipes all output —
       printing a prompt echo and then clearing would just leave it empty anyway.
     */
-    if (trimmed === 'clear') {
-      Output.clear();
-      return;
-    }
+    // if (trimmed === 'clear') {
+    //   Output.clear();
+    //   return;
+    // }
 
     /* Always print the prompt echo before the command's output */
     Output.addPromptEcho(trimmed, cwd);

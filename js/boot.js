@@ -38,7 +38,7 @@ const Boot = (() => {
     { text: '[  OK  ] Mounting filesystem /dev/sda1',              cls: 'green',   delay: 810  },
     { text: '[  OK  ] Loading kernel modules',                     cls: 'green',   delay: 940  },
     { text: '[  OK  ] Starting systemd services',                  cls: 'green',   delay: 1060 },
-    { text: '[ WARN ] Permissions disabled — superuser dont!', cls: 'red',     delay: 1210 },
+    { text: '[ WARN ] ERROR:DENIED — SUPERUSER DONT!!!!', cls: 'red',     delay: 1210 },
     { text: '[  OK  ] Metasploit framework loaded',                cls: 'green',   delay: 1360 },
     { text: '[  OK  ] Portfolio modules initialized',              cls: 'green',   delay: 1490 },
     { text: '',                                                     cls: 'default', delay: 1600 },
