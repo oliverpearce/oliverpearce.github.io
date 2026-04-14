@@ -25,6 +25,7 @@ const Input = (() => {
 
   let _inputEl  = null;
   let _onSubmit = null;
+  let _getCwd   = null; /* Callback to get current working directory */
 
   /*
     The autocomplete candidates are all the commands we know about.
@@ -38,22 +39,88 @@ const Input = (() => {
     'help',
     'whoami',
     'ls',
+    'ls /',
+    'ls ~',
     'ls projects/',
+    'ls projects/llm-ctf/',
+    'ls projects/llm-ctf/benchmark/',
+    'ls projects/llm-ctf/walkthroughs/',
+    'ls projects/scmac-ios/',
+    'ls projects/study-buddy/',
+    'ls projects/acm-ai-lab/',
+    'ls projects/silvered-bot/',
     'cd',
+    'cd ~',
+    'cd /',
     'cd projects/',
+    'cd projects/llm-ctf/',
+    'cd projects/llm-ctf/benchmark/',
+    'cd projects/llm-ctf/walkthroughs/',
+    'cd projects/scmac-ios/',
+    'cd projects/study-buddy/',
+    'cd projects/acm-ai-lab/',
+    'cd projects/silvered-bot/',
     'cat',
     'cat resume.txt',
     'cat skills.txt',
     'cat contact.txt',
     'cat projects/llm-ctf/README.md',
+    'cat projects/llm-ctf/benchmark/challenges.json',
+    'cat projects/llm-ctf/benchmark/scoring.py',
+    'cat projects/llm-ctf/walkthroughs/chall-01.md',
+    'cat projects/llm-ctf/walkthroughs/chall-02.md',
     'cat projects/scmac-ios/README.md',
+    'cat projects/scmac-ios/AppStore.url',
     'cat projects/study-buddy/README.md',
+    'cat projects/study-buddy/devpost.url',
     'cat projects/acm-ai-lab/README.md',
+    'cat projects/acm-ai-lab/research-manuscript.url',
     'cat projects/silvered-bot/README.md',
+    'cat projects/silvered-bot/source.url',
+    'echo',
+    'echo hello',
+    'echo hello world',
+    'cowsay',
+    'cowsay Oliver is cool',
+    'cowsay moo',
     'uname -a',
     'date',
     'clear',
   ];
+
+  /*
+    updateCursorPosition() measures the width of typed text and moves the cursor
+    to follow it smoothly. This creates the vim-style effect where the cursor
+    appears to move as you type.
+  */
+  function updateCursorPosition() {
+    const cursorEl = document.querySelector('.cursor');
+    if (!cursorEl) return;
+
+    const text = _inputEl.value;
+    if (text.length === 0) {
+      /* No text typed, cursor stays at the beginning */
+      cursorEl.style.transform = 'translateX(0px)';
+    } else {
+      /*
+        Create a temporary span with identical styling to measure text width.
+        This span is never visible — we just use it for measurements.
+      */
+      const measurer = document.createElement('span');
+      measurer.style.position = 'absolute';
+      measurer.style.visibility = 'hidden';
+      measurer.style.whiteSpace = 'pre';
+      measurer.style.font = window.getComputedStyle(_inputEl).font;
+      measurer.textContent = text;
+      document.body.appendChild(measurer);
+
+      const textWidth = measurer.offsetWidth;
+      document.body.removeChild(measurer);
+
+      /* Move cursor to the right of all typed text, plus one character forward (8px) */
+      cursorEl.style.transform = `translateX(${textWidth + 8}px)`;
+    }
+  }
 
   /*
     _submit() is called whenever a command should be executed — either from
@@ -135,33 +202,121 @@ const Input = (() => {
     const val = _inputEl.value;
     if (!val) return;
 
+    let matches = [];
+
     /*
-      filter() returns a new array containing only items where the callback
-      returns true. startsWith() checks if a string begins with another string.
-      We exclude the exact match (c !== val) so Tab on a complete command
-      doesn't do anything — only partial matches get completed.
+      Parse the input to see if it's a command (first word) or includes arguments.
+      For simple commands like "whoami", autocomplete from AUTOCOMPLETE_COMMANDS.
+      For path commands like "ls projects", generate suggestions from the filesystem.
     */
-    const matches = AUTOCOMPLETE_COMMANDS.filter(
-      c => c.startsWith(val) && c !== val
-    );
+    const parts = val.split(/\s+/);
+    const cmd = parts[0];
+
+    if (parts.length === 1) {
+      /*
+        User is still typing just the command (no arguments yet).
+        Autocomplete from the full list of static commands.
+      */
+      matches = AUTOCOMPLETE_COMMANDS.filter(
+        c => c.startsWith(val) && c !== val
+      );
+    } else if (['ls', 'cd', 'cat'].includes(cmd) && _getCwd) {
+      /*
+        User is typing a path argument for ls/cd/cat.
+        Generate suggestions from the filesystem based on current directory.
+      */
+      const cwd = _getCwd();
+      const partialPath = parts.slice(1).join(' ');
+      matches = _generatePathSuggestions(cmd, partialPath, cwd);
+    }
 
     if (matches.length === 1) {
       /* Only one match — complete it */
       _inputEl.value = matches[0];
+      updateCursorPosition();
+    } else if (matches.length > 1) {
+      /*
+        Multiple matches: find the longest common prefix and autocomplete to it.
+        This mimics shell behavior where Tab expands as much as possible.
+      */
+      let prefix = val;
+      const maxLen = Math.max(...matches.map(m => m.length));
+      
+      for (let i = val.length; i < maxLen; i++) {
+        const char = matches[0][i];
+        /* Check if all matches have the same character at position i */
+        if (char !== undefined && matches.every(m => m[i] === char)) {
+          prefix += char;
+        } else {
+          /* Different characters or end of string reached */
+          break;
+        }
+      }
+      
+      if (prefix.length > val.length) {
+        _inputEl.value = prefix;
+        updateCursorPosition();
+      }
     }
-    /* Multiple matches: we could print options to the output in the future.
-       For now, we do nothing, which is what SLVRD does when there's ambiguity. */
+  }
+
+  /*
+    _generatePathSuggestions() generates autocomplete matches for filesystem paths.
+    It handles relative paths, looks up entries in the Filesystem, and returns
+    matching files/directories with proper formatting.
+    
+    Example: typing "ls pro" in ~/ generates ["ls projects/"]
+    Example: typing "cat README" in ~/projects/llm-ctf/ generates ["cat README.md"]
+  */
+  function _generatePathSuggestions(cmd, partialPath, cwd) {
+    if (!Filesystem) return [];
+    
+    /* Resolve the directory we're listing relative to cwd */
+    let targetDir = cwd;
+    let lastSlashIdx = partialPath.lastIndexOf('/');
+    
+    let prefix = '';
+    if (lastSlashIdx > -1) {
+      /* User typed a path with slashes, resolve it */
+      prefix = partialPath.substring(0, lastSlashIdx + 1);
+      const relPath = partialPath.substring(0, lastSlashIdx);
+      
+      /* Resolve the relative path to an absolute path */
+      targetDir = Filesystem.resolve(relPath, cwd);
+      if (!targetDir) return [];
+    }
+    
+    const entries = Filesystem.listDir(targetDir);
+    if (!entries) return [];
+    
+    /* Filter entries that match what the user has typed so far */
+    const needle = partialPath.substring(lastSlashIdx + 1);
+    const matches = entries
+      .filter(entry => entry.startsWith(needle))
+      .map(entry => {
+        /* Return the full command with the completed path */
+        const fullPath = `${cmd} ${prefix}${entry}`;
+        return fullPath;
+      });
+    
+    return matches;
   }
 
   /*
     init() wires up all the event listeners. It's called by main.js after
     the shell section is revealed — we need the DOM elements to exist first.
+    
+    @param onSubmit — callback when user presses Enter
+    @param getCwd   — callback that returns the current working directory
   */
-  function init(onSubmit) {
+  function init(onSubmit, getCwd) {
     _onSubmit = onSubmit;
+    _getCwd   = getCwd;
     _inputEl  = document.getElementById('cmd-input');
 
     _inputEl.addEventListener('keydown', _onKeydown);
+    _inputEl.addEventListener('input', updateCursorPosition);
+    _inputEl.addEventListener('keyup', updateCursorPosition);
 
     /*
       querySelectorAll() returns a NodeList of all matching elements.

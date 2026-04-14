@@ -39,6 +39,7 @@ const Commands = (() => {
       show a friendlier label like "read resume" while running "cat resume.txt".
     */
     const bubbles = [
+      ['help',                                'help'],
       ['whoami',                              'whoami'],
       ['ls',                                  'ls'],
       ['cat resume.txt',                      'cat resume.txt'],
@@ -51,6 +52,8 @@ const Commands = (() => {
       ['cat projects/study-buddy/README.md',  'cat projects/study-buddy/README.md'],
       ['cat projects/acm-ai-lab/README.md',   'cat projects/acm-ai-lab/README.md'],
       ['cat projects/silvered-bot/README.md', 'cat projects/silvered-bot/README.md'],
+      ['echo hello world',                    'echo hello world'],
+      ['cowsay Oliver is cool',               'cowsay Oliver is cool'],
       ['pwd',                                 'pwd'],
       ['uname -a',                            'uname -a'],
       ['date',                                'date'],
@@ -257,6 +260,32 @@ const Commands = (() => {
     }
   }
 
+  function cmdEcho({ args }) {
+    /* Echo concatenates all arguments with spaces and prints them */
+    const output = args.join(' ');
+    Output.addLine('white', output);
+  }
+
+  function cmdCowsay({ args }) {
+    /* Cowsay prints a cow with a speech bubble containing the message */
+    const message = args.join(' ') || 'Hello!';
+    const width = Math.max(message.length + 2, 20);
+    const padding = ' '.repeat(Math.max(0, width - message.length - 2));
+
+    const lines = [
+      ' ' + '_'.repeat(width + 2),
+      `| ${message}${padding} |`,
+      ' ' + '-'.repeat(width + 2),
+      '        \\   ^__^',
+      '         \\  (oo)\\_______',
+      '            (__)\\       )\\/\\',
+      '                ||----w |',
+      '                ||     ||',
+    ];
+
+    lines.forEach(line => Output.addLine('default', line));
+  }
+
 
   /* ── Command map ──────────────────────────────────────────────── */
 
@@ -275,6 +304,8 @@ const Commands = (() => {
     ls:     cmdLs,
     cd:     cmdCd,
     cat:    cmdCat,
+    echo:   cmdEcho,
+    cowsay: cmdCowsay,
   };
 
 

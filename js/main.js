@@ -82,9 +82,15 @@
     document.getElementById('bar-title').textContent = 'root@oliver: ~ — SLVRD';
 
     Output.init();
-    Input.init(handleCommand);
+    Input.init(handleCommand, () => cwd);
+
+    /* Display the welcome message using terminal output styling with clickable link */
+    Output.addHTML('Hello world! I have opened my personal console for you to navigate and poke around, so please feel free to learn as much as you can about me! If you would prefer a more traditional experience, <a href="https://oliverjpearce.com/" target="_blank" rel="noopener noreferrer" class="terminal-link">please visit this website</a>.');
+    Output.addLine('blank', '');
+
     Input.focus(); /* auto-focus the input so users can type immediately */
   }
+
 
   /*
     DOMContentLoaded fires when the HTML has been fully parsed and all

@@ -315,10 +315,11 @@ body {
   padding:     10px var(--padding-h) 14px;
   border-top:  1px solid var(--color-border-subtle);
   flex-shrink: 0;
+  flex-wrap:   wrap;  /* allow wrapping if needed */
 }
 
 .input-row__field {
-  flex:      1;      /* fills all remaining width between the prompt and cursor */
+  flex:      1;      /* fills all remaining width between the cursor and end */
   font-size: var(--font-size-base);
   color:     var(--color-white);
   outline:   none;   /* removes the default browser focus ring (we don't need it here) */
@@ -329,6 +330,10 @@ body {
     over its size, colour, and blink animation.
   */
   caret-color: transparent;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-left: 1px;  /* small space after cursor */
 }
 
 
@@ -336,8 +341,8 @@ body {
 
 /*
   This is a plain green rectangle that blinks using a CSS animation defined
-  in animations.css. It sits right after the text input in the flex row,
-  so it appears at the end of whatever the user has typed.
+  in animations.css. It sits BEFORE the text input in the flex row (vim-style),
+  so it appears at the beginning and shifts right as the user types.
 */
 .cursor {
   display:        inline-block;
@@ -345,8 +350,10 @@ body {
   height:         15px;
   background:     var(--color-green);
   vertical-align: text-bottom;
-  margin-left:    1px;
+  margin-right:   0px;
   flex-shrink:    0;
+  transition:     transform 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94);  /* monkeytype-style snappy easing */
+  transform:      translateX(0px);  /* initial position */
 }
 
 
@@ -358,11 +365,8 @@ body {
   text-underline-offset adds space between the text and underline so
   the underline doesn't touch the bottom of descending letters like g and y.
 */
-.terminal-link {
-  color:                 var(--color-blue);
-  text-decoration:       underline;
-  text-underline-offset: 3px;
-  cursor:                pointer;
+
+/* ── 13. Clickable links inside terminal output ──────────────────────── */
 }
 
 .terminal-link:hover {
