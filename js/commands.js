@@ -54,7 +54,7 @@ const Commands = (() => {
       ['cat projects/silvered-bot/README.md', 'cat projects/silvered-bot/README.md'],
       ['cat projects/scmac-ios/AppStore.url', 'cat projects/scmac-ios/AppStore.url'],
       ['echo hello world',                    'echo hello world'],
-      ['cowsay Oliver is cool',               'cowsay Oliver is cool'],
+      ['cowsay moo',               'cowsay moo'],
       ['file resume.txt',                     'file resume.txt'],
       ['file projects/scmac-ios/AppStore.url','file projects/scmac-ios/AppStore.url'],
       ['find -name "README"',                 'find -name "README"'],
@@ -62,6 +62,7 @@ const Commands = (() => {
       ['pwd',                                 'pwd'],
       ['uname -a',                            'uname -a'],
       ['date',                                'date'],
+      ['hint',                                'hint'],
       ['clear',                               'clear'],
     ];
 
@@ -128,6 +129,10 @@ const Commands = (() => {
       ? '/home/root'
       : cwd.replace('~', '/home/root');
     Output.addLine('white', expanded);
+  }
+
+  function cmdHint({ cwd }) {
+    Output.addLine('white', "ok fine, ill tell you something just dont refresh the page.");
   }
 
   function cmdLs({ args, cwd }) {
@@ -415,6 +420,7 @@ const Commands = (() => {
     file:   cmdFile,
     find:   cmdFind,
     clear:  cmdClear,
+    hint:   cmdHint,
   };
 
 
