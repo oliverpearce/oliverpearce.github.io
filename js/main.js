@@ -89,6 +89,12 @@
     Output.addHTML('For the CTF, the flag is in the format SLVRD{...} - good luck! c:');
     Output.addLine('blank', '');
 
+    /* Scroll to top so user can see the whole console */
+    setTimeout(() => {
+      const outputEl = document.getElementById('output');
+      if (outputEl) outputEl.scrollTop = 0;
+    }, 100);
+
     Input.focus(); /* auto-focus the input so users can type immediately */
   }
 

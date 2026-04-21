@@ -315,7 +315,8 @@ body {
   padding:     10px var(--padding-h) 14px;
   border-top:  1px solid var(--color-border-subtle);
   flex-shrink: 0;
-  flex-wrap:   wrap;  /* allow wrapping if needed */
+  flex-wrap:   nowrap;  /* keep prompt and input on same line */
+  overflow-x:  auto;    /* allow horizontal scroll on mobile if needed */
 }
 
 .input-row__field {
@@ -323,6 +324,7 @@ body {
   font-size: var(--font-size-base);
   color:     var(--color-white);
   outline:   none;   /* removes the default browser focus ring (we don't need it here) */
+  white-space: nowrap; /* prevent text wrapping */
 
   /*
     caret-color: transparent hides the browser's built-in blinking text cursor.
