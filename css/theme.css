@@ -64,7 +64,7 @@
     'green' is the colorClass you'd use in a data/files.js line tuple.
   */
   --color-green:   #85e89d; /* success messages, directory names, ASCII art glow */
-  --color-blue:    #79b8ff; /* links, hostname in prompt, informational text */
+  --color-blue:    #6495ed; /* cornmeal blue for links, hostname in prompt, informational text */
   --color-purple:  #b392f0; /* accent colour, used sparingly */
   --color-gold:    #febc2e; /* section labels and key names inside files */
   --color-red:     #f97583; /* errors, warnings, the "root" part of the prompt */

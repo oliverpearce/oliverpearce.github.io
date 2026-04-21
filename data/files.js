@@ -84,10 +84,10 @@ const FILES = {
 
     ['gold',    'LINKS'],
     /* The third element is the full URL — output.js uses this to make the line clickable */
-    ['link', '  Resume     →  drive.google.com/file/...', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
-    ['link', '  LinkedIn   →  linkedin.com/in/oliverjpearce',                               'https://linkedin.com/in/oliverjpearce'],
-    ['link', '  GitHub     →  github.com/oliverpearce',                                     'https://github.com/oliverpearce'],
-    ['link', '  Website    →  oliverjpearce.com',                                           'https://oliverjpearce.com'],
+    ['link', 'https://drive.google.com/file/d/1KRkfYS8WgYertQLWr6v8A0SsXnRyZJoj/view?usp=sharing'],
+    ['link', 'https://linkedin.com/in/oliverjpearce'],
+    ['link', 'https://github.com/oliverpearce'],
+    ['link', 'https://oliverjpearce.com'],
   ],
 
 
@@ -140,13 +140,13 @@ const FILES = {
 
     /* Using 'link' colorClass with explicit url for mailto and https links */
     ['gold',    '  Email'],
-    ['link',    '            OliverPearce13@gmail.com',      'mailto:OliverPearce13@gmail.com'],
+    ['link',    'mailto:OliverPearce13@gmail.com'],
     ['gold',    '  LinkedIn'],
-    ['link',    '            linkedin.com/in/oliverjpearce', 'https://linkedin.com/in/oliverjpearce'],
+    ['link',    'https://linkedin.com/in/oliverjpearce'],
     ['gold',    '  GitHub'],
-    ['link',    '            github.com/oliverpearce',       'https://github.com/oliverpearce'],
+    ['link',    'https://github.com/oliverpearce'],
     ['gold',    '  Website'],
-    ['link',    '            oliverjpearce.com',             'https://oliverjpearce.com'],
+    ['link',    'https://oliverjpearce.com'],
     ['blank',   ''],
 
     ['default', '  Open to: everything! say hi o/'],
@@ -198,8 +198,7 @@ const FILES = {
     ['gold',    '  Status'],
     ['green',   '            LIVE on Apple App Store ✓'],
     ['gold',    '  Link'],
-    ['link',    '            apps.apple.com/...',
-                             'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
+    ['link',    'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
     ['blank',   ''],
 
     ['white',   '  Org: UCSC BluePrint — nonprofit-focused student tech org'],
@@ -223,9 +222,9 @@ const FILES = {
     ['gold',    '  Stack'],
     ['white',   '            Supabase · WebRTC · React'],
     ['gold',    '  Devpost'],
-    ['link',    '            devpost.com/', 'https://devpost.com/software/studysync-gbo8fx'],
+    ['link',    'https://devpost.com/software/studysync-gbo8fx'],
     ['gold',    '  Source'],
-    ['link',    '            github.com/',      'https://github.com/Yelloo5191/StudyBuddy'],
+    ['link',    'https://github.com/Yelloo5191/StudyBuddy'],
   ],
 
 
@@ -246,10 +245,9 @@ const FILES = {
     ['gold',    '  Stack'],
     ['white',   '            Colab · U-Net · VAE'],
     ['gold',    '  Manuscript'],
-    ['link',    '            drive.google.com/file/...',
-                             'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
+    ['link',    'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
     ['gold',    '  Org'],
-    ['link',    '            UCSC ACM Branch', 'https://ucscacm.vercel.app'],
+    ['link',    'https://ucscacm.vercel.app'],
   ],
 
 
@@ -268,30 +266,26 @@ const FILES = {
     ['gold',    '  Stack'],
     ['white',   '            Python · discord.py · PokeAPI'],
     ['gold',    '  Source'],
-    ['link',    '            github.com/oliverpearce/silvered-bot', 'https://github.com/oliverpearce/silvered-bot'],
+    ['link',    'https://github.com/oliverpearce/silvered-bot'],
   ],
 
 
   /* ── ~/.url shortcut files ───────────────────────────────────────── */
 
   '~/projects/scmac-ios/AppStore.url': [
-    ['link',    'Apple App Store — Santa Cruz Mountains Art Center',
-                'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
+    ['link',    'https://apps.apple.com/us/app/santa-cruz-mountain-art-center/id6550900077'],
   ],
 
   '~/projects/study-buddy/devpost.url': [
-    ['link',    'Study Buddy — Devpost Submission',
-                'https://devpost.com/software/studysync-gbo8fx'],
+    ['link',    'https://devpost.com/software/studysync-gbo8fx'],
   ],
 
   '~/projects/acm-ai-lab/research-manuscript.url': [
-    ['link',    'ACM AI Lab Research Manuscript',
-                'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
+    ['link',    'https://drive.google.com/file/d/12vl0m068oqXT2AZkwGLA8TpLOl8bNDVS/view'],
   ],
 
   '~/projects/silvered-bot/source.url': [
-    ['link',    'silvered-bot GitHub Repository',
-                'https://github.com/oliverpearce/silvered-bot'],
+    ['link',    'https://github.com/oliverpearce/silvered-bot'],
   ],
 
 };

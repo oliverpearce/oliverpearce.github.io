@@ -416,6 +416,22 @@ const Input = (() => {
     document.getElementById('terminal').addEventListener('click', () => {
       _inputEl.focus();
     });
+
+    /*
+      Specifically allow clicking the cursor to focus the input on mobile.
+    */
+    document.querySelector('.cursor').addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent bubbling to terminal
+      _inputEl.focus();
+    });
+
+    /*
+      Mobile floating button to focus input.
+    */
+    const focusBtn = document.getElementById('focus-input-btn');
+    if (focusBtn) {
+      focusBtn.addEventListener('click', () => _inputEl.focus());
+    }
   }
 
   function focus() {

@@ -27,6 +27,9 @@
 
 const Commands = (() => {
 
+  // Flag decoded from base64 for immediate availability
+  const _flag = atob('U0xWUkR7TjB0LXQwZGF5LXRoNG5rLXkwdSF9');
+
   /* ── Command handlers ─────────────────────────────────────────── */
 
   function cmdHelp() {
@@ -147,14 +150,17 @@ const Commands = (() => {
         addHTML(). Directories get blue, files get green — matching the colour
         scheme of `ls --color=auto` on most Linux systems.
         We join with four spaces to mimic the default ls column spacing.
+        On Windows, use three spaces due to different font spacing.
       */
+      const isWindows = navigator.platform.includes('Win');
+      const separator = isWindows ? '   ' : '    ';
       const html = entries
         .map(e =>
           e.endsWith('/')
             ? `<span class="line--blue">${Output.esc(e)}</span>`
             : `<span class="line--green">${Output.esc(e)}</span>`
         )
-        .join('    ');
+        .join(separator);
       Output.addHTML(html);
     } else if (Filesystem.isFile(targetPath)) {
       Output.addLine('red', `ls: cannot access '${arg}': Not a directory`);
@@ -206,7 +212,7 @@ const Commands = (() => {
       /* Just `sudo rm` — playful warning */
       Output.addLines([
         ['red',     `sudo: ${Output.esc(args[0] || 'command')}: permission denied`],
-        ['default', 'wait fr chill please dont hahahahaha'],
+        ['default', 'wait fr chill please dont hahahahaha -oli'],
       ]);
       return;
     }
@@ -237,7 +243,7 @@ const Commands = (() => {
           ['blank',   ''],
           ['gold',    '  ┌─────────────────────────────────────────┐'],
           ['gold',    '  │                                         │'],
-          ['gold',    '  │       SLVRD{N0t-t0d4y-th4nk-y0u!}       │'],
+          ['gold',    `  │       ${_flag}       │`],
           ['gold',    '  │                                         │'],
           ['gold',    '  └─────────────────────────────────────────┘'],
           ['blank',   ''],

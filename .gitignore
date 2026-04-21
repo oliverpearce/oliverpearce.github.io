@@ -17,6 +17,9 @@ Icon
 *.dmg
 *.iso
 
+# CTF flag - committed as base64 for deployment
+# flag.env
+
 # AFP share folders
 .AppleDB
 .AppleDesktop

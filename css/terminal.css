@@ -365,8 +365,9 @@ body {
   text-underline-offset adds space between the text and underline so
   the underline doesn't touch the bottom of descending letters like g and y.
 */
-
-/* ── 13. Clickable links inside terminal output ──────────────────────── */
+.terminal-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .terminal-link:hover {
@@ -401,6 +402,7 @@ body {
   */
   transition:    background 0.12s, color 0.12s, border-color 0.12s;
   user-select:   none;
+  touch-action:  manipulation; /* Prevent double-tap zoom on mobile */
 }
 
 .quickbar__btn:hover {
@@ -440,6 +442,7 @@ body {
   transition:     background 0.12s, border-color 0.12s;
   user-select:    none;
   vertical-align: middle;
+  touch-action:   manipulation; /* Prevent double-tap zoom on mobile */
 }
 
 .cmd-bubble:hover {
@@ -469,5 +472,35 @@ body {
   /* Shorter output area to leave room for the input row and quick bar */
   .output {
     max-height: 300px;
+  }
+
+  /* Floating mobile controls */
+  .floating-mobile-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .floating-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--color-green);
+    color: var(--color-bg-terminal);
+    border: 2px solid var(--color-green);
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.12s, border-color 0.12s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .floating-btn:hover {
+    background: var(--color-bg-terminal);
+    color: var(--color-green);
   }
 }
