@@ -334,6 +334,14 @@ body {
   border: none;
   padding: 0;
   margin-left: 1px;  /* small space after cursor */
+  touch-action: manipulation; /* Prevent zoom on iOS when typing */
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari specific: prevent auto-zoom on input focus */
+  .input-row__field {
+    font-size: 16px;
+  }
 }
 
 
@@ -402,6 +410,7 @@ body {
   */
   transition:    background 0.12s, color 0.12s, border-color 0.12s;
   user-select:   none;
+  -webkit-user-select: none; /* iOS Safari */
   touch-action:  manipulation; /* Prevent double-tap zoom on mobile */
 }
 
@@ -441,6 +450,7 @@ body {
   cursor:         pointer;
   transition:     background 0.12s, border-color 0.12s;
   user-select:    none;
+  -webkit-user-select: none; /* iOS Safari */
   vertical-align: middle;
   touch-action:   manipulation; /* Prevent double-tap zoom on mobile */
 }
