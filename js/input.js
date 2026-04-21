@@ -411,10 +411,14 @@ const Input = (() => {
       .terminal-link anchor tags doesn't get caught here — the link's
       default action (opening the URL) should still happen normally.
       Event bubbling means a click anywhere inside #terminal will
-      trigger this listener.
+      trigger this listener. However, button clicks will be prevented from
+      bubbling with stopPropagation() so they don't trigger focus.
     */
-    document.getElementById('terminal').addEventListener('click', () => {
-      _inputEl.focus();
+    document.getElementById('terminal').addEventListener('click', (e) => {
+      // Don't focus input if clicking on buttons or links
+      if (!e.target.closest('button') && !e.target.closest('a')) {
+        _inputEl.focus();
+      }
     });
 
     /*

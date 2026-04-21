@@ -482,6 +482,16 @@ body {
   /* Shorter output area to leave room for the input row and quick bar */
   .output {
     max-height: 300px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+  }
+
+  /* Adjust line display for mobile wrapping */
+  .line {
+    word-break: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
   }
 
   /* Floating mobile controls */
