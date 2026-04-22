@@ -30,6 +30,9 @@ const Commands = (() => {
   // Flag decoded from base64 for immediate availability
   const _flag = atob('U0xWUkR7TjB0LXQwZGF5LXRoNG5rLXkwdSF9');
 
+  // Track hint command calls for the sequential dialogue
+  let _hintCount = 0;
+
   /* ── Command handlers ─────────────────────────────────────────── */
 
   function cmdHelp() {
@@ -66,6 +69,7 @@ const Commands = (() => {
       ['uname -a',                            'uname -a'],
       ['date',                                'date'],
       ['hint',                                'hint'],
+      ['man help',                            'man help'],
       ['clear',                               'clear'],
     ];
 
@@ -135,7 +139,19 @@ const Commands = (() => {
   }
 
   function cmdHint({ cwd }) {
-    Output.addLine('white', "ok fine, ill tell you something just dont refresh the page.");
+    _hintCount++;
+
+    if (_hintCount === 1) {
+      Output.addLine('default', 'i dont want to give you a hint. -oli');
+    } else if (_hintCount === 2) {
+      Output.addLine('default', "stop. you can't convince me to. -oli");
+    } else if (_hintCount === 3) {
+      Output.addLine('default', 'ugh, you\'re so persistent... -oli');
+    } else if (_hintCount === 4) {
+      Output.addLine('cyan', 'fine!! ill tell you just dont refresh the page -oli');
+    } else {
+      Output.addLine('default', 'i already told you! refresh the page! -oli');
+    }
   }
 
   function cmdLs({ args, cwd }) {
@@ -205,15 +221,37 @@ const Commands = (() => {
       .trim() removes leading/trailing whitespace before comparing.
     */
     const fullArgs = args.join(' ').trim();
-    const isRmRf   = fullArgs === 'rm -rf /' || fullArgs === 'rm -rf / --no-preserve-root' || fullArgs === 'rm -r -f /';
-    const isRm     = fullArgs === 'rm' || fullArgs === 'rm -rf' || fullArgs === 'rm -r -f';
 
-    if (isRm) {
-      /* Just `sudo rm` — playful warning */
-      Output.addLines([
-        ['red',     `sudo: ${Output.esc(args[0] || 'command')}: permission denied`],
-        ['default', 'wait fr chill please dont hahahahaha -oli'],
-      ]);
+    /* Handle just `sudo` with no arguments */
+    if (!args[0]) {
+      Output.addLine('default', 'superuser do? nice try, but you, non-superuser, will not! >:( -oli');
+      return;
+    }
+
+    /* Handle `sudo whoami` */
+    if (args[0] === 'whoami') {
+      Output.addLine('white', 'SLVRD, A.k.a. the digital circus master! hi fellow ctf-er o/ -oli');
+      return;
+    }
+
+    /* Check for rm with root (/) — the most dangerous case */
+    const isRmRf   = fullArgs === 'rm -rf /' || fullArgs === 'rm -rf / --no-preserve-root' || fullArgs === 'rm -r -f /';
+
+    /* Check for sudo rm -rf (without specifying root directory) */
+    const isRmRfDangerous = fullArgs === 'rm -rf' || fullArgs === 'rm -r -f';
+
+    /* Check for just `sudo rm` */
+    const isSudoRm = fullArgs === 'rm';
+
+    if (isSudoRm) {
+      /* Just `sudo rm` — warning about being careful */
+      Output.addLine('default', 'woah be careful, you could delete something important. denied. -oli');
+      return;
+    }
+
+    if (isRmRfDangerous) {
+      /* `sudo rm -rf` without root — very dangerous but not ultimate */
+      Output.addLine('default', "close to deleting my system! i'm glad i never taught you to specify the root directory or man pages -oli");
       return;
     }
 
@@ -406,6 +444,35 @@ const Commands = (() => {
     Output.addLine('blank', '');
   }
 
+  function cmdMan({ args }) {
+    /*
+      Man pages for all commands. Easter egg: man hint tells you to refresh
+      the page, rewarding those who read the documentation!
+    */
+    if (!args[0]) {
+      Output.addLine('default', 'Usage: man [command]');
+      Output.addLine('default', 'Try: man help, man ls, man cd, etc.');
+      return;
+    }
+
+    const command = args[0].toLowerCase();
+
+    /* Easter egg: man hint triggers a special message */
+    if (command === 'hint') {
+      Output.addLines(MAN_PAGES['_easter']);
+      return;
+    }
+
+    const page = MAN_PAGES[command];
+
+    if (page) {
+      Output.addLines(page);
+    } else {
+      Output.addLine('red', `man: No manual entry for ${Output.esc(command)}`);
+      Output.addLine('default', 'Available commands: help, whoami, ls, cd, cat, echo, pwd, uname, date, file, find, cowsay, clear, hint, sudo, man');
+    }
+  }
+
 
   /* ── Command map ──────────────────────────────────────────────── */
 
@@ -430,6 +497,7 @@ const Commands = (() => {
     find:   cmdFind,
     clear:  cmdClear,
     hint:   cmdHint,
+    man:    cmdMan,
   };
 
 

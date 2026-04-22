@@ -215,16 +215,18 @@
 
       data/filesystem.js  → creates the FILESYSTEM global object
       data/files.js       → creates the FILES global object
+      data/man.js         → creates the MAN_PAGES global object
 
       js/output.js        → creates Output (needs nothing)
       js/filesystem.js    → creates Filesystem (reads FILESYSTEM + FILES)
-      js/commands.js      → creates Commands (uses Output and Filesystem)
+      js/commands.js      → creates Commands (uses Output, Filesystem, and MAN_PAGES)
       js/boot.js          → creates Boot (standalone, no deps)
       js/input.js         → creates Input (standalone, wired in main.js)
       js/main.js          → the entry point that starts everything
   -->
   <script src="data/filesystem.js"></script>
   <script src="data/files.js"></script>
+  <script src="data/man.js"></script>
 
   <script src="js/output.js"></script>
   <script src="js/filesystem.js"></script>

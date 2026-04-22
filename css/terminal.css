@@ -273,6 +273,7 @@ body {
 .line--gold    { color: var(--color-gold); }
 .line--red     { color: var(--color-red); }
 .line--white   { color: var(--color-white); }
+.line--cyan    { color: #00ffff; font-family: 'Comic Sans MS', cursive; }
 
 
 /* ── 9. Prompt colours ───────────────────────────────────────────────── */
